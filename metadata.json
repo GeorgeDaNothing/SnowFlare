@@ -1,0 +1,5 @@
+{
+  "name": "Horizon Pulse",
+  "description": "AI-driven sports performance analysis and biomechanical evaluation platform.",
+  "requestFramePermissions": ["camera"]
+}

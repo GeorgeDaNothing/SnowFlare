@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Lexend", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-primary: #ab3500;
+  --color-primary-container: #ff6b35;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #5f1900;
+  
+  --color-secondary: #77574d;
+  --color-secondary-container: #fed3c7;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #795950;
+  
+  --color-tertiary: #00677e;
+  --color-tertiary-container: #00a7cb;
+  --color-on-tertiary: #ffffff;
+  --color-on-tertiary-container: #003744;
+  
+  --color-background: #fff9ef;
+  --color-on-background: #1d1b16;
+  
+  --color-surface: #fff9ef;
+  --color-on-surface: #1d1b16;
+  --color-on-surface-variant: #594139;
+  
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f9f3ea;
+  --color-surface-container: #f3ede4;
+  --color-surface-container-high: #ede7de;
+  --color-surface-container-highest: #e7e2d9;
+  
+  --color-outline: #8d7168;
+  --color-outline-variant: #e1bfb5;
+  
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error: #ffffff;
+  --color-on-error-container: #93000a;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-sans;
+  }
+}
+
+@layer utilities {
+  .orange-glow {
+    box-shadow: 0 0 40px -10px rgba(255, 107, 53, 0.3);
+  }
+  
+  .video-overlay-grid {
+    background-image: linear-gradient(to right, rgba(225, 191, 181, 0.1) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(225, 191, 181, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
