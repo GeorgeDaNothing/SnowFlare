@@ -22,7 +22,7 @@ import {
   ArrowUpRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { analyzeMoveFast, analyzeMoveWithAI, isAIAvailable } from '@/lib/gemini';
+import { analyzeMoveFast, analyzeMoveWithAI, isAIAvailable } from '@/lib/openai';
 import { saveMove, getRiderProfile, saveRiderProfile } from '@/lib/storage';
 import type { MoveAnalysisRequest, MoveAnalysisResponse, DangerLevel } from '@/types';
 

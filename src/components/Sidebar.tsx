@@ -4,7 +4,6 @@ import {
   Home, 
   History, 
   BookOpen, 
-  Users, 
   Activity, 
   HelpCircle, 
   Play
@@ -15,7 +14,6 @@ const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: History, label: 'Session Log', path: '/sessions' },
   { icon: BookOpen, label: 'Technique Library', path: '/library' },
-  { icon: Users, label: 'Team Feed', path: '/team' },
   { icon: Activity, label: 'Gear Lab', path: '/gear' },
 ];
 

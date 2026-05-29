@@ -1,28 +1,24 @@
-import { GoogleGenAI } from '@google/genai';
+import OpenAI from 'openai';
 import type { MoveAnalysisRequest, MoveAnalysisResponse, SessionTrendAnalysisRequest, SessionTrendAnalysisResponse } from '@/types';
 import { analyzeMove as ruleBasedAnalyzeMove } from './riskEngine';
 import { buildMoveAnalysisPrompt, buildSessionTrendPrompt, buildStructuredMoveAnalysisPrompt } from './promptBuilder';
 import { getCachedAnalysis, setCachedAnalysis } from './storage';
 import { hashRequest } from './hash';
 
-const API_KEY = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || '';
+const API_KEY = (typeof process !== 'undefined' && process.env?.OPENAI_API_KEY) || '';
 
-let genAI: GoogleGenAI | null = null;
+let openai: OpenAI | null = null;
 
 try {
   if (API_KEY) {
-    genAI = new GoogleGenAI({ apiKey: API_KEY });
+    openai = new OpenAI({ apiKey: API_KEY, dangerouslyAllowBrowser: true });
   }
 } catch {
-  genAI = null;
-}
-
-function getModel() {
-  return genAI?.models || null;
+  openai = null;
 }
 
 export function isAIAvailable(): boolean {
-  return !!API_KEY && !!genAI;
+  return !!API_KEY && !!openai;
 }
 
 // ============================================
@@ -58,21 +54,23 @@ export async function analyzeMoveWithAI(
   }
 
   try {
-    const model = getModel();
-    if (!model) throw new Error('Model not available');
-
     const prompt = buildStructuredMoveAnalysisPrompt(request);
 
-    const response = await model.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: {
-        temperature: 0.4,
-        maxOutputTokens: 800,
-      },
+    const response = await openai!.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert snowboarding coach and biomechanics analyst. Respond ONLY with valid JSON. No markdown, no extra text.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 800,
+      response_format: { type: 'json_object' },
     });
 
-    const text = response.text || '';
+    const text = response.choices[0]?.message?.content || '';
     const extras = parseStructuredResponse(text);
 
     // Merge AI language layer with rule-based physics/scoring
@@ -116,21 +114,22 @@ export async function analyzeSessionTrends(
   }
 
   try {
-    const model = getModel();
-    if (!model) throw new Error('Model not available');
-
     const prompt = buildSessionTrendPrompt(request);
 
-    const response = await model.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: {
-        temperature: 0.5,
-        maxOutputTokens: 1200,
-      },
+    const response = await openai!.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a sports performance analyst. Be concise, evidence-based, and actionable.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.5,
+      max_tokens: 1200,
     });
 
-    const text = response.text || '';
+    const text = response.choices[0]?.message?.content || '';
     return parseTrendAnalysisResponse(text);
   } catch (err) {
     console.warn('AI trend analysis failed, using fallback:', err);
@@ -144,11 +143,7 @@ export async function analyzeSessionTrends(
 
 function parseStructuredResponse(text: string): AIMoveAnalysisExtras {
   try {
-    // Try to extract JSON from the response (it might be wrapped in markdown)
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return { coachInsight: text };
-
-    const parsed = JSON.parse(jsonMatch[0]);
+    const parsed = JSON.parse(text);
     return {
       coachInsight: parsed.coachInsight || text,
       mentalCue: parsed.mentalCue,
@@ -158,7 +153,6 @@ function parseStructuredResponse(text: string): AIMoveAnalysisExtras {
       confidenceLevel: parsed.confidenceLevel,
     };
   } catch {
-    // If JSON parsing fails, use the raw text as coach insight
     return { coachInsight: text };
   }
 }
@@ -168,7 +162,6 @@ function parseTrendAnalysisResponse(text: string): SessionTrendAnalysisResponse 
   const recommendations: string[] = [];
   let riskTrend: SessionTrendAnalysisResponse['riskTrend'] = 'stable';
 
-  // Simple heuristic parsing
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
 
   for (const line of lines) {
