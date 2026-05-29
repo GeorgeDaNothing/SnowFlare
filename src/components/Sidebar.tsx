@@ -7,11 +7,9 @@ import {
   Users, 
   Activity, 
   HelpCircle, 
-  LogOut,
   Play
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
@@ -23,24 +21,10 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation();
-  const { user, logout } = useAuth();
-
   return (
     <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant/10 pt-16">
       <div className="px-6 py-8">
-        <div className="flex items-center gap-3 mb-8">
-          <img 
-            alt="Pro Athlete Avatar" 
-            className="w-10 h-10 rounded-lg object-cover" 
-            src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=ab3500&color=fff'}
-            referrerPolicy="no-referrer"
-          />
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-on-surface leading-tight truncate">{user?.name || 'Elite Performance'}</p>
-            <p className="text-xs text-on-surface-variant opacity-70 truncate">{user?.email || 'Winter Season 24/25'}</p>
-          </div>
-        </div>
-        
+
         <nav className="space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -74,13 +58,6 @@ export function Sidebar() {
             <HelpCircle className="w-4 h-4" />
             Support
           </a>
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:translate-x-1 duration-200 text-sm hover:text-error transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </button>
         </div>
       </div>
     </aside>

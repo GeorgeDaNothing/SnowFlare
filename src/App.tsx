@@ -2,12 +2,14 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
+import { DebugPanel } from '@/components/DebugPanel';
 import { Sidebar } from '@/components/Sidebar';
 import { TopNav } from '@/components/TopNav';
 import { Dashboard } from '@/views/Dashboard';
 import { VideoAnalysis } from '@/views/VideoAnalysis';
 import { MoveDesigner } from '@/views/MoveDesigner';
 import { AnalysisStudio } from '@/views/AnalysisStudio';
+import { Sessions } from '@/views/Sessions';
 import { Login } from '@/views/auth/Login';
 import { Register } from '@/views/auth/Register';
 import { ForgotPassword } from '@/views/auth/ForgotPassword';
@@ -23,6 +25,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+      <DebugPanel />
     </div>
   );
 }
@@ -45,6 +48,7 @@ function AppRoutes() {
       <Route path="/analysis" element={<ProtectedRoute><Layout><VideoAnalysis /></Layout></ProtectedRoute>} />
       <Route path="/designer" element={<ProtectedRoute><Layout><MoveDesigner /></Layout></ProtectedRoute>} />
       <Route path="/insights" element={<ProtectedRoute><Layout><AnalysisStudio /></Layout></ProtectedRoute>} />
+      <Route path="/sessions" element={<ProtectedRoute><Layout><Sessions /></Layout></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
