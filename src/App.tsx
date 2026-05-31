@@ -5,11 +5,12 @@ import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { DebugPanel } from '@/components/DebugPanel';
 import { Sidebar } from '@/components/Sidebar';
 import { TopNav } from '@/components/TopNav';
-import { Dashboard } from '@/views/Dashboard';
-import { VideoAnalysis } from '@/views/VideoAnalysis';
+import { Simulation } from '@/views/Simulation';
 import { MoveDesigner } from '@/views/MoveDesigner';
+import { VideoAnalysis } from '@/views/VideoAnalysis';
 import { AnalysisStudio } from '@/views/AnalysisStudio';
-import { Sessions } from '@/views/Sessions';
+import { TrainingLogView } from '@/views/TrainingLog';
+import { Presets } from '@/views/Presets';
 import { Login } from '@/views/auth/Login';
 import { Register } from '@/views/auth/Register';
 import { ForgotPassword } from '@/views/auth/ForgotPassword';
@@ -44,11 +45,12 @@ function AppRoutes() {
       <Route path="/reset-password" element={<PublicOnlyRoute><ResetPassword /></PublicOnlyRoute>} />
 
       {/* Protected app routes */}
-      <Route path="/" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><Layout><Simulation /></Layout></ProtectedRoute>} />
       <Route path="/analysis" element={<ProtectedRoute><Layout><VideoAnalysis /></Layout></ProtectedRoute>} />
       <Route path="/designer" element={<ProtectedRoute><Layout><MoveDesigner /></Layout></ProtectedRoute>} />
       <Route path="/insights" element={<ProtectedRoute><Layout><AnalysisStudio /></Layout></ProtectedRoute>} />
-      <Route path="/sessions" element={<ProtectedRoute><Layout><Sessions /></Layout></ProtectedRoute>} />
+      <Route path="/training-log" element={<ProtectedRoute><Layout><TrainingLogView /></Layout></ProtectedRoute>} />
+      <Route path="/presets" element={<ProtectedRoute><Layout><Presets /></Layout></ProtectedRoute>} />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />

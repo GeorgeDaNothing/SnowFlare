@@ -110,10 +110,52 @@ export interface MoveAnalysisResponse {
 }
 
 // ============================================
-// Session Logging Types
+// Preset Types
 // ============================================
 
-export interface SessionMoveAttempt {
+export interface PersonalPreset {
+  id: string;
+  name: string;
+  weightKg: number;
+  heightCm: number;
+  experienceLevel: ExperienceLevel;
+  stance: Stance;
+  dominantFoot: 'left' | 'right';
+}
+
+export interface BoardPreset {
+  id: string;
+  name: string;
+  brand: string;
+  model: string;
+  lengthCm: number;
+  flex: string;
+  shape: string;
+}
+
+export interface SnowTrailPreset {
+  id: string;
+  name: string;
+  difficulty: string;
+  kickerType: KickerType;
+  takeoffAngle: number;
+  landingAngle: number;
+  tableLength: number;
+  verticalDrop: number;
+  snowCondition: SnowCondition;
+}
+
+export interface PresetsCollection {
+  personal: PersonalPreset[];
+  board: BoardPreset[];
+  trails: SnowTrailPreset[];
+}
+
+// ============================================
+// Training Log Types (replaces Session)
+// ============================================
+
+export interface TrainingLogMoveAttempt {
   moveId: string;
   moveName: string;
   config: MoveAnalysisRequest;
@@ -125,13 +167,18 @@ export interface SessionMoveAttempt {
   postNotes: string;
 }
 
-export interface Session {
+export interface TrainingLog {
   id: string;
   date: string;
   location: string;
   weather: string;
+  windSpeedKmh: number;
+  snowQuality: string;
+  temperatureC: number;
   notes: string;
-  moves: SessionMoveAttempt[];
+  isFavorite: boolean;
+  videos: string[];
+  moves: TrainingLogMoveAttempt[];
 }
 
 // ============================================

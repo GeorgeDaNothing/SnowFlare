@@ -4,25 +4,25 @@ import {
   Home, 
   History, 
   BookOpen, 
-  Activity, 
+  Settings,
   HelpCircle, 
   Play
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
-  { icon: Home, label: 'Home', path: '/' },
-  { icon: History, label: 'Session Log', path: '/sessions' },
+  { icon: Home, label: 'Simulation', path: '/' },
+  { icon: History, label: 'Training Log', path: '/training-log' },
   { icon: BookOpen, label: 'Technique Library', path: '/library' },
-  { icon: Activity, label: 'Gear Lab', path: '/gear' },
+  { icon: Settings, label: 'Presets', path: '/presets' },
 ];
 
 export function Sidebar() {
   const location = useLocation();
+
   return (
     <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant/10 pt-16">
       <div className="px-6 py-8">
-
         <nav className="space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -46,10 +46,10 @@ export function Sidebar() {
       </div>
 
       <div className="mt-auto px-6 py-8 space-y-4">
-        <button className="w-full py-3 bg-primary bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-lg shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
+        <Link to="/designer" className="w-full py-3 bg-primary bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-lg shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
           <Play className="w-4 h-4 fill-current" />
-          Start Simulation
-        </button>
+          Move Designer
+        </Link>
         
         <div className="pt-4 border-t border-outline-variant/20">
           <a className="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:translate-x-1 duration-200 text-sm" href="#">

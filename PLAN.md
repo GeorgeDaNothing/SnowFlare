@@ -5,248 +5,181 @@
 
 ---
 
-## Phase 1 — Data Layer & Schemas ✅
+## New User Workflow
 
-- [x] Define all TypeScript interfaces in `src/types/` (move, session, rider, analysis)
-- [x] Create `src/lib/storage.ts` — localStorage CRUD service for all JSON stores
-- [x] Create `src/lib/hash.ts` — deterministic hash for analysis cache keys
-- [x] Create `src/components/DebugPanel.tsx` — collapsible raw JSON viewer/editor for development
-- [x] Wire DebugPanel into Layout (visible in dev mode)
+### Simulation (`/` — replaces Home/Dashboard)
+Multi-step wizard that replaces the static home page:
 
-**Storage Keys:**
-- `hp_moves` — saved move presets
-- `hp_sessions` — logged practice sessions
-- `hp_rider_profile` — persistent rider info
-- `hp_analysis_cache` — cached AI responses
+**Step 1 — Environment**
+- [ ] Weather (clear, cloudy, foggy, snowing, windy)
+- [ ] Wind speed (km/h)
+- [ ] Snow quality (powder, packed, icy, slush, corduroy)
+- [ ] Temperature (°C)
 
----
+**Step 2 — Choose Presets**
+- [ ] Select snow trail (from saved presets)
+- [ ] Select rider profile (weight, height, experience, stance)
+- [ ] Select board (from saved presets)
 
-## Phase 2 — Rule-Based Analysis Engine ✅
+**Step 3 — Planned Moves**
+- [ ] Select from saved move presets
+- [ ] Or configure a new move on the spot
+- [ ] Review all selected moves
 
-- [x] Create `src/lib/physics.ts` — deterministic physics calculations (airtime, velocity, impact force)
-- [x] Create `src/lib/riskEngine.ts` — rule-based risk scoring system
-  - [x] Rotation risk matrix (degrees × experience level)
-  - [x] Inversion risk matrix (depth × flip type)
-  - [x] Landing risk formula (speed, angle, snow condition, kicker geometry)
-  - [x] Fatigue multiplier
-  - [x] Environment multipliers
-- [x] Create `src/lib/promptBuilder.ts` — builds Gemini prompts from `MoveAnalysisRequest`
+**Step 4 — Start Simulation**
+- [ ] Run analysis on all planned moves
+- [ ] Display combined risk assessment
+- [ ] Show physics preview
+- [ ] Show risk factors and recommendations
 
----
+**Step 5 — Results & Auto-Save**
+- [ ] Review simulation results
+- [ ] Auto-save to Training Log
+- [ ] Option to re-run or start over
 
-## Phase 3 — AI Integration (Gemini) ✅
+### Training Log (`/training-log` — was `/sessions`)
+- [ ] Rename from "Session Log" / "Sessions"
+- [ ] List view with filters (all / landed / crashed / injured / favorites)
+- [ ] Favorite toggle on each training log
+- [ ] Attach training videos to each log (file upload)
+- [ ] Detail view with full attempt history + videos
+- [ ] Create form with environment, presets, moves, outcomes
 
-- [x] Create `src/lib/gemini.ts` — wrapper around `@google/genai`
-  - [x] Handles API key from env
-  - [x] Rate limiting / debouncing
-  - [x] Error handling (network, quota, malformed response)
-  - [x] Fallback to rule-based-only when AI unavailable
-- [x] Implement `analyzeMoveWithAI(request)` → `MoveAnalysisResponse`
-  - [x] Send structured prompt with JSON schema
-  - [x] Parse JSON response with validation
-  - [x] Merge AI output with rule-based physics (AI language + rule numbers)
-- [x] Implement `analyzeSessionTrends(sessions)` → `SessionTrendAnalysisResponse`
-- [x] Cache successful AI responses in `hp_analysis_cache`
-
----
-
-## Phase 4 — Move Designer Enhancement ✅
-
-- [x] Expand MoveDesigner controls:
-  - [x] Flip type selector (none, backflip, frontflip, cork, double-cork, triple-cork, rodeo)
-  - [x] Direction toggle (frontside/backside)
-  - [x] Grab type expanded to full list + grab duration slider
-  - [x] Kicker config editor (type, angles, dimensions)
-  - [x] Rider quick-stats panel (editable if logged in)
-  - [x] Session context (attempt number, weather, visibility, temperature, fatigue)
-- [x] Add "Analyze Move" button that triggers analysis
-- [x] Add analysis results panel (risk score meter, physics preview, risk factors list)
-- [x] Add "Save Preset" button → stores to `hp_moves`
-- [x] Add prerequisite moves checklist based on analysis output
+### Presets (`/presets` — was `/gear`)
+- [ ] Personal Info: weight, height, experience level, stance, dominant foot
+- [ ] Board Info: brand, model, length, flex, shape
+- [ ] Snow Trails: name, difficulty, kicker config, landing config, snow condition
+- [ ] Save/load/manage presets
 
 ---
 
-## Phase 5 — Session Logger View (`/sessions`) ✅
+## Data Model Changes
 
-- [x] Create `src/views/Sessions.tsx` — new route `/sessions`
-- [x] Session list view with filtering (date, move, landed, injury)
-- [x] Session detail view with pre/post analysis comparison
-- [x] New session form (date, location, weather, moves attempted with outcomes)
-- [x] "Add Move to Session" picker that loads from saved presets
-- [x] Outcome logging: landed (yes/no), injury (type/severity), fatigue, notes
-- [x] Update Sidebar `/sessions` link to real route
-
----
-
-## Phase 6 — Dashboard with Real Data ✅
-
-- [x] Replace static Dashboard with dynamic content from storage
-- [x] Display recent sessions list from `hp_sessions`
-- [x] Show risk trend comparison (recent 3 vs previous 3 sessions)
-- [x] Show personal stats: total attempts, landing rate, injury rate, most practiced move
-- [x] Use authenticated user's name instead of hardcoded "Marcus"
-- [x] Add "Quick Analyze" card that jumps to MoveDesigner
-- [x] Empty state for first-time users
-
----
-
-## Phase 7 — Analysis Studio (Video Upload) ⏳
-
-- [ ] Implement actual file drop + video element playback
-- [ ] Extract key frames from video (client-side canvas)
-- [ ] Send frames to Gemini for pose estimation (if API supports)
-- [ ] Display frame-by-frame pose overlay on video
-- [ ] Compare detected pose to ideal form from move config
-- [ ] Mark as "Phase 2" — implement after core move analysis is solid
-
----
-
-## Phase 8 — Polish & Integration ⏳
-
-- [ ] Wire "Start Simulation" buttons across app to launch MoveDesigner
-- [ ] Add loading states for AI analysis (skeleton UI, progress indicators)
-- [ ] Add error states when AI fails (show rule-based results + retry button)
-- [ ] Ensure all new views are behind `ProtectedRoute`
-- [ ] Update Sidebar navigation to match implemented routes
-- [ ] Add empty states for first-time users on all views
-- [ ] Responsive design pass on all new components
-- [ ] Remove remaining static/hardcoded data from VideoAnalysis view
-- [ ] Remove remaining static/hardcoded data from AnalysisStudio view
-
----
-
-## AI Input / Output Schemas
-
-### Move Analysis Request → AI
-
+### TrainingLog (replaces Session)
 ```typescript
-interface MoveAnalysisRequest {
-  move: {
-    name: string;
-    rotationDegrees: number;         // 0 – 1440
-    inversionDepth: number;          // 0 – 100
-    flipType: 'none' | 'backflip' | 'frontflip' | 'rodeo' | 'cork' | 'double-cork' | 'triple-cork';
-    direction: 'frontside' | 'backside';
-    grabType: 'indy' | 'melon' | 'mute' | 'stalefish' | 'tail' | 'nose' | 'japan' | 'method' | 'seatbelt' | 'truck_driver' | null;
-    grabDurationPct: number;         // 0-100
-  };
-  kicker: {
-    type: 'big-air' | 'slopestyle' | 'halfpipe' | 'rail' | 'kicker';
-    takeoffAngle: number;
-    landingAngle: number;
-    tableLength: number;
-    verticalDrop: number;
-    snowCondition: 'powder' | 'packed' | 'icy' | 'slush' | 'corduroy';
-  };
-  rider: {
-    experienceLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'pro';
-    heightCm: number;
-    weightKg: number;
-    stance: 'regular' | 'goofy';
-    dominantFoot: 'left' | 'right';
-    yearsExperience: number;
-    recentInjuries: string[];
-  };
-  context: {
-    attemptNumber: number;
-    previousSuccessRate: number;
-    weather: 'clear' | 'cloudy' | 'foggy' | 'snowing' | 'windy';
-    visibility: 'excellent' | 'good' | 'fair' | 'poor';
-    temperatureC: number;
-    fatigueLevel: number;            // 0-10
-  };
+interface TrainingLog {
+  id: string;
+  date: string;
+  location: string;
+  weather: string;
+  windSpeedKmh: number;
+  snowQuality: string;
+  temperatureC: number;
+  notes: string;
+  isFavorite: boolean;
+  videos: string[]; // base64 data URLs or blob URLs
+  moves: TrainingLogMoveAttempt[];
 }
 ```
 
-### Move Analysis Response
-
+### Presets
 ```typescript
-interface MoveAnalysisResponse {
-  overallRiskScore: number;          // 0-100
-  dangerLevel: 'low' | 'moderate' | 'high' | 'extreme';
-  landingConfidence: number;         // 0-100
-  physics: {
-    estimatedAirTimeSec: number;
-    estimatedMaxHeightM: number;
-    estimatedLandingVelocityMs: number;
-    estimatedImpactForceG: number;
-    requiredApproachSpeedKmh: number;
-    rotationSpeedRequiredDs: number;
-  };
-  riskFactors: Array<{
-    category: string;
-    severity: 'info' | 'warning' | 'critical';
-    title: string;
-    description: string;
-    recommendation: string;
-  }>;
-  improvements: Array<{
-    area: string;
-    currentValue: string;
-    suggestedValue: string;
-    expectedBenefit: string;
-    difficultyToImplement: 'easy' | 'medium' | 'hard';
-  }>;
-  coachInsight: string;
-  prerequisiteMoves: string[];
-  nextProgressionMoves: string[];
-  analysisConfidence: number;
-  source: 'rule' | 'ai' | 'hybrid';
+interface PersonalPreset {
+  name: string;
+  weightKg: number;
+  heightCm: number;
+  experienceLevel: string;
+  stance: string;
+  dominantFoot: string;
+}
+
+interface BoardPreset {
+  name: string;
+  brand: string;
+  model: string;
+  lengthCm: number;
+  flex: string;
+  shape: string;
+}
+
+interface SnowTrailPreset {
+  id: string;
+  name: string;
+  difficulty: string;
+  kickerType: string;
+  takeoffAngle: number;
+  landingAngle: number;
+  tableLength: number;
+  verticalDrop: number;
+  snowCondition: string;
 }
 ```
 
-### Session Trend Analysis
-
-```typescript
-interface SessionTrendAnalysisRequest {
-  rider: { experienceLevel: string; yearsExperience: number };
-  sessions: Array<{
-    date: string;
-    movesAttempted: Array<{
-      moveName: string;
-      riskScore: number;
-      landed: boolean;
-      injuryOccurred: boolean;
-      injuryType: string | null;
-      fatigueLevel: number;
-      weather: string;
-    }>;
-  }>;
-}
-
-interface SessionTrendAnalysisResponse {
-  patternInsights: Array<{ pattern: string; evidence: string; severity: 'insight' | 'warning' | 'alert' }>;
-  personalizedRecommendations: string[];
-  riskTrend: 'improving' | 'stable' | 'worsening';
-  dangerFactorsOverTime: Array<{ factor: string; trend: 'increasing' | 'decreasing' | 'stable' }>;
-}
-```
+### Storage Keys
+- `hp_training_logs` — TrainingLog[]
+- `hp_presets` — { personal: PersonalPreset[], board: BoardPreset[], trails: SnowTrailPreset[] }
+- `hp_moves` — SavedMove[]
+- `hp_analysis_cache` — AnalysisCache
 
 ---
 
-## Architecture
+## Implementation Checklist
 
-```
-React SPA
-├── Views
-│   ├── MoveDesigner        → move config + analysis results
-│   ├── Sessions            → log/list/view sessions
-│   ├── Dashboard           → stats + insights
-│   ├── VideoAnalysis       → static UI (Phase 7)
-│   ├── AnalysisStudio      → upload UI (Phase 7)
-│   └── Auth pages          → login/register/forgot/reset
-│
-├── Services
-│   ├── riskEngine.ts       → rule-based scoring (offline, instant)
-│   ├── physics.ts          → projectile motion calculations
-│   ├── gemini.ts           → AI wrapper with fallback
-│   ├── promptBuilder.ts    → structured prompt generation
-│   ├── storage.ts          → localStorage CRUD
-│   └── hash.ts             → deterministic cache keys
-│
-└── Storage (localStorage)
-    ├── hp_moves            → SavedMove[]
-    ├── hp_sessions         → Session[]
-    ├── hp_rider_profile    → RiderProfile
-    └── hp_analysis_cache   → AnalysisCache
-```
+### Phase A — Rename & Refactor
+- [ ] Rename `Session` → `TrainingLog` in types, storage, views
+- [ ] Rename `hp_sessions` → `hp_training_logs` in storage
+- [ ] Rename `/sessions` route → `/training-log`
+- [ ] Rename "Session Log" sidebar → "Training Log"
+- [ ] Rename "Gear Lab" sidebar → "Presets"
+- [ ] Update Dashboard to link to new routes
+
+### Phase B — Simulation View (`/`)
+- [ ] Create `src/views/Simulation.tsx` multi-step wizard
+- [ ] Step 1: Environment form (weather, wind, snow, temp)
+- [ ] Step 2: Preset picker (trail, rider, board)
+- [ ] Step 3: Move selector (saved presets + quick config)
+- [ ] Step 4: Run analysis on all moves
+- [ ] Step 5: Results view with auto-save to Training Log
+- [ ] Wire `/` route to Simulation
+
+### Phase C — Presets View (`/presets`)
+- [ ] Create `src/views/Presets.tsx`
+- [ ] Personal info form + list
+- [ ] Board info form + list
+- [ ] Snow trail form + list (with kicker config)
+- [ ] Storage service for presets
+
+### Phase D — Training Log Enhancements
+- [ ] Add `isFavorite` flag to TrainingLog
+- [ ] Add `videos` array to TrainingLog
+- [ ] Favorite toggle in list and detail views
+- [ ] Video upload (file input → base64 or object URL)
+- [ ] Video player in detail view
+- [ ] Filter by favorites
+
+### Phase E — Sidebar & Navigation
+- [ ] Update nav items: Simulation, Training Log, Technique Library, Presets
+- [ ] Update TopNav links
+- [ ] Ensure all routes are protected
+
+---
+
+## Completed Earlier Phases
+
+### Phase 1 — Data Layer & Schemas ✅
+- [x] Define all TypeScript interfaces in `src/types/`
+- [x] Create `src/lib/storage.ts` — localStorage CRUD service
+- [x] Create `src/lib/hash.ts` — deterministic hash for cache keys
+- [x] Create `src/components/DebugPanel.tsx`
+
+### Phase 2 — Rule-Based Analysis Engine ✅
+- [x] Create `src/lib/physics.ts`
+- [x] Create `src/lib/riskEngine.ts`
+- [x] Create `src/lib/promptBuilder.ts`
+
+### Phase 3 — AI Integration (OpenAI) ✅
+- [x] Create `src/lib/openai.ts` — wrapper around OpenAI SDK
+- [x] Implement `analyzeMoveWithAI(request)`
+- [x] Implement `analyzeSessionTrends(sessions)`
+- [x] Cache successful AI responses
+
+### Phase 4 — Move Designer ✅
+- [x] Full move config controls
+- [x] Analysis results panel
+- [x] Save preset button
+
+### Phase 5 — Sessions (old) ✅
+- [x] List, detail, create form
+
+### Phase 6 — Dashboard (old) ✅
+- [x] Dynamic stats from storage

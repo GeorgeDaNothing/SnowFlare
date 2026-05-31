@@ -74,7 +74,7 @@ export function DebugPanel() {
   function handleReset() {
     if (confirm('Clear all local storage data? This cannot be undone.')) {
       localStorage.removeItem('hp_moves');
-      localStorage.removeItem('hp_sessions');
+      localStorage.removeItem('hp_training_logs');
       localStorage.removeItem('hp_rider_profile');
       localStorage.removeItem('hp_analysis_cache');
       refreshData();

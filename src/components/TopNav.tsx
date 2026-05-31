@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Settings, LogOut, User, ChevronDown } from 'lucide-react';
+import { Bell, LogOut, User, ChevronDown } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
-  { label: 'Dashboard', path: '/' },
+  { label: 'Simulation', path: '/' },
   { label: 'Move Designer', path: '/designer' },
   { label: 'Video Analysis', path: '/analysis' },
-  { label: 'AI Insights', path: '/insights' },
+  { label: 'Training Log', path: '/training-log' },
 ];
 
 export function TopNav() {
@@ -93,10 +93,6 @@ export function TopNav() {
                   <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors">
                     <User className="w-4 h-4" />
                     Profile
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors">
-                    <Settings className="w-4 h-4" />
-                    Settings
                   </button>
                 </div>
                 <div className="border-t border-outline-variant/10 py-1 mt-1">

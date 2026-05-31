@@ -14,12 +14,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSessions, getMoves } from '@/lib/storage';
-import type { Session } from '@/types';
+import { getTrainingLogs, getMoves } from '@/lib/storage';
+import type { TrainingLog } from '@/types';
 
 export function Dashboard() {
   const { user } = useAuth();
-  const sessions = getSessions();
+  const sessions = getTrainingLogs();
   const savedMoves = getMoves();
 
   const stats = useMemo(() => {
@@ -172,10 +172,10 @@ export function Dashboard() {
             <div className="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-bold text-on-surface">Recent Sessions</h3>
-                <a href="#/sessions" className="text-primary text-xs font-bold hover:underline">View All</a>
+                <a href="#/training-log" className="text-primary text-xs font-bold hover:underline">View All</a>
               </div>
               <div className="space-y-4">
-                {stats!.recentSessions.map((session: Session, i: number) => {
+                {stats!.recentSessions.map((session: TrainingLog, i: number) => {
                   const landed = session.moves.filter((m) => m.landed).length;
                   const total = session.moves.length;
                   return (
@@ -208,7 +208,7 @@ export function Dashboard() {
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" />
                 </a>
-                <a href="#/sessions" className="flex items-center gap-3 p-3 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors group">
+                <a href="#/training-log" className="flex items-center gap-3 p-3 rounded-lg bg-surface-container-low hover:bg-surface-container-high transition-colors group">
                   <div className="w-8 h-8 rounded-lg bg-tertiary/10 flex items-center justify-center">
                     <ShieldCheck className="w-4 h-4 text-tertiary" />
                   </div>
