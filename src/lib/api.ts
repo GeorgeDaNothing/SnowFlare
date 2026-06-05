@@ -3,8 +3,7 @@
  * All endpoints require Bearer token (except auth register/login/reset flows).
  */
 
-declare const importMetaEnv: Record<string, string | undefined>;
-const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE) || 'http://localhost:3001/api';
+const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE) ?? '';
 
 const TOKEN_KEY = 'hp_token';
 

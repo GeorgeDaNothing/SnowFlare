@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { DebugPanel } from '@/components/DebugPanel';
 import { Sidebar } from '@/components/Sidebar';
+import { MigrationScreen } from '@/components/MigrationScreen';
+import { isMigrationComplete, hasLegacyData } from '@/lib/migrate';
 import { Simulation } from '@/views/Simulation';
 import { MoveDesigner } from '@/views/MoveDesigner';
 import { VideoAnalysis } from '@/views/VideoAnalysis';
@@ -59,10 +61,17 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const [migrationDone, setMigrationDone] = useState(isMigrationComplete() || !hasLegacyData());
+  const handleMigrationComplete = useCallback(() => setMigrationDone(true), []);
+
   return (
     <AuthProvider>
       <Router>
-        <AppRoutes />
+        {!migrationDone ? (
+          <MigrationScreen onComplete={handleMigrationComplete} />
+        ) : (
+          <AppRoutes />
+        )}
       </Router>
     </AuthProvider>
   );
