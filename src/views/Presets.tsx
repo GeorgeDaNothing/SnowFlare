@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { User, Layers, Mountain, Plus, Trash2, Save, X } from 'lucide-react';
+import { User, Layers, Mountain, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getPresets, savePresets, addPersonalPreset, addBoardPreset, addSnowTrailPreset, deletePersonalPreset, deleteBoardPreset, deleteSnowTrailPreset } from '@/lib/storage';
+import { getPresets, addPersonalPreset, addBoardPreset, addSnowTrailPreset, deletePersonalPreset, deleteBoardPreset, deleteSnowTrailPreset } from '@/lib/storage';
 import type { PersonalPreset, BoardPreset, SnowTrailPreset } from '@/types';
 
 function generateId() {
@@ -94,16 +94,40 @@ function PersonalForm({ onSave, onCancel }: { onSave: () => void; onCancel: () =
     <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10 space-y-4">
       <h3 className="text-sm font-bold text-on-surface">New Rider Profile</h3>
       <div className="grid grid-cols-2 gap-4">
-        <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input type="number" placeholder="Weight (kg)" value={weight} onChange={(e) => setWeight(parseInt(e.target.value) || 0)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input type="number" placeholder="Height (cm)" value={height} onChange={(e) => setHeight(parseInt(e.target.value) || 0)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <select value={experience} onChange={(e) => setExperience(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
-          {['beginner', 'intermediate', 'advanced', 'expert', 'pro'].map((e) => <option key={e} value={e}>{e}</option>)}
-        </select>
+        <Field label="Profile Name">
+          <input placeholder="e.g. My Profile" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
+        <Field label="Weight">
+          <div className="flex items-center gap-2">
+            <input type="number" placeholder="70" value={weight} onChange={(e) => setWeight(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+            <span className="text-xs text-on-surface-variant shrink-0">kg</span>
+          </div>
+        </Field>
+        <Field label="Height">
+          <div className="flex items-center gap-2">
+            <input type="number" placeholder="175" value={height} onChange={(e) => setHeight(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+            <span className="text-xs text-on-surface-variant shrink-0">cm</span>
+          </div>
+        </Field>
+        <Field label="Experience Level">
+          <select value={experience} onChange={(e) => setExperience(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
+            {['beginner', 'intermediate', 'advanced', 'expert', 'pro'].map((e) => <option key={e} value={e}>{e}</option>)}
+          </select>
+        </Field>
+        <Field label="Stance">
+          <select value={stance} onChange={(e) => setStance(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
+            {['regular', 'goofy'].map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </Field>
+        <Field label="Dominant Foot">
+          <select value={foot} onChange={(e) => setFoot(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
+            {['left', 'right'].map((f) => <option key={f} value={f}>{f}</option>)}
+          </select>
+        </Field>
       </div>
-      <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-2 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest">Cancel</button>
-        <button onClick={handleSave} className="flex-1 py-2 bg-primary text-on-primary font-bold text-xs rounded-lg hover:bg-primary/90">Save</button>
+      <div className="flex gap-3 pt-2">
+        <button onClick={onCancel} className="flex-1 py-2.5 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest">Cancel</button>
+        <button onClick={handleSave} className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-lg hover:bg-primary/90">Save Profile</button>
       </div>
     </div>
   );
@@ -115,10 +139,13 @@ function PersonalCard({ preset }: { preset: PersonalPreset; key?: React.Key }) {
       <button onClick={() => deletePersonalPreset(preset.id)} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
-      <h3 className="text-sm font-bold text-on-surface mb-2">{preset.name}</h3>
-      <div className="space-y-1 text-xs text-on-surface-variant">
-        <p>{preset.weightKg}kg • {preset.heightCm}cm</p>
-        <p>{preset.experienceLevel} • {preset.stance} • {preset.dominantFoot} foot</p>
+      <h3 className="text-sm font-bold text-on-surface mb-3">{preset.name}</h3>
+      <div className="space-y-2 text-xs text-on-surface-variant">
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Weight</span><span className="font-medium text-on-surface">{preset.weightKg} kg</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Height</span><span className="font-medium text-on-surface">{preset.heightCm} cm</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Experience</span><span className="font-medium text-on-surface capitalize">{preset.experienceLevel}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Stance</span><span className="font-medium text-on-surface capitalize">{preset.stance}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Dominant Foot</span><span className="font-medium text-on-surface capitalize">{preset.dominantFoot}</span></div>
       </div>
     </div>
   );
@@ -145,16 +172,31 @@ function BoardForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => v
     <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10 space-y-4">
       <h3 className="text-sm font-bold text-on-surface">New Board</h3>
       <div className="grid grid-cols-2 gap-4">
-        <input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input placeholder="Brand" value={brand} onChange={(e) => setBrand(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input placeholder="Model" value={model} onChange={(e) => setModel(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input type="number" placeholder="Length (cm)" value={length} onChange={(e) => setLength(parseInt(e.target.value) || 0)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input placeholder="Flex" value={flex} onChange={(e) => setFlex(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input placeholder="Shape" value={shape} onChange={(e) => setShape(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        <Field label="Board Name">
+          <input placeholder="e.g. Daily Driver" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
+        <Field label="Brand">
+          <input placeholder="e.g. Burton" value={brand} onChange={(e) => setBrand(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
+        <Field label="Model">
+          <input placeholder="e.g. Custom X" value={model} onChange={(e) => setModel(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
+        <Field label="Length">
+          <div className="flex items-center gap-2">
+            <input type="number" placeholder="155" value={length} onChange={(e) => setLength(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+            <span className="text-xs text-on-surface-variant shrink-0">cm</span>
+          </div>
+        </Field>
+        <Field label="Flex Rating">
+          <input placeholder="e.g. medium, stiff, soft" value={flex} onChange={(e) => setFlex(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
+        <Field label="Shape">
+          <input placeholder="e.g. directional, twin, directional-twin" value={shape} onChange={(e) => setShape(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
       </div>
-      <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-2 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest">Cancel</button>
-        <button onClick={handleSave} className="flex-1 py-2 bg-primary text-on-primary font-bold text-xs rounded-lg hover:bg-primary/90">Save</button>
+      <div className="flex gap-3 pt-2">
+        <button onClick={onCancel} className="flex-1 py-2.5 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest">Cancel</button>
+        <button onClick={handleSave} className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-lg hover:bg-primary/90">Save Board</button>
       </div>
     </div>
   );
@@ -166,10 +208,13 @@ function BoardCard({ preset }: { preset: BoardPreset; key?: React.Key }) {
       <button onClick={() => deleteBoardPreset(preset.id)} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
-      <h3 className="text-sm font-bold text-on-surface mb-2">{preset.name}</h3>
-      <div className="space-y-1 text-xs text-on-surface-variant">
-        <p>{preset.brand} {preset.model}</p>
-        <p>{preset.lengthCm}cm • {preset.flex} flex • {preset.shape}</p>
+      <h3 className="text-sm font-bold text-on-surface mb-3">{preset.name}</h3>
+      <div className="space-y-2 text-xs text-on-surface-variant">
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Brand</span><span className="font-medium text-on-surface">{preset.brand}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Model</span><span className="font-medium text-on-surface">{preset.model}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Length</span><span className="font-medium text-on-surface">{preset.lengthCm} cm</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Flex</span><span className="font-medium text-on-surface capitalize">{preset.flex}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Shape</span><span className="font-medium text-on-surface capitalize">{preset.shape}</span></div>
       </div>
     </div>
   );
@@ -197,21 +242,44 @@ function TrailForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => v
     <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10 space-y-4">
       <h3 className="text-sm font-bold text-on-surface">New Snow Trail</h3>
       <div className="grid grid-cols-2 gap-4">
-        <input placeholder="Trail Name" value={name} onChange={(e) => setName(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input placeholder="Difficulty" value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <select value={kickerType} onChange={(e) => setKickerType(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
-          {['big-air', 'slopestyle', 'halfpipe', 'rail', 'kicker'].map((k) => <option key={k} value={k}>{k}</option>)}
-        </select>
-        <select value={snow} onChange={(e) => setSnow(e.target.value)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
-          {['powder', 'packed', 'icy', 'slush', 'corduroy'].map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <input type="number" placeholder="Takeoff Angle" value={takeoff} onChange={(e) => setTakeoff(parseInt(e.target.value) || 0)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input type="number" placeholder="Landing Angle" value={landing} onChange={(e) => setLanding(parseInt(e.target.value) || 0)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-        <input type="number" placeholder="Vertical Drop (m)" value={drop} onChange={(e) => setDrop(parseFloat(e.target.value) || 0)} className="px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        <Field label="Trail Name">
+          <input placeholder="e.g. Main Park Kicker" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
+        <Field label="Difficulty">
+          <input placeholder="e.g. intermediate, advanced, pro" value={difficulty} onChange={(e) => setDifficulty(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+        </Field>
+        <Field label="Kicker Type">
+          <select value={kickerType} onChange={(e) => setKickerType(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
+            {['big-air', 'slopestyle', 'halfpipe', 'rail', 'kicker'].map((k) => <option key={k} value={k}>{k}</option>)}
+          </select>
+        </Field>
+        <Field label="Snow Condition">
+          <select value={snow} onChange={(e) => setSnow(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
+            {['powder', 'packed', 'icy', 'slush', 'corduroy'].map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </Field>
+        <Field label="Takeoff Angle">
+          <div className="flex items-center gap-2">
+            <input type="number" placeholder="25" value={takeoff} onChange={(e) => setTakeoff(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+            <span className="text-xs text-on-surface-variant shrink-0">°</span>
+          </div>
+        </Field>
+        <Field label="Landing Angle">
+          <div className="flex items-center gap-2">
+            <input type="number" placeholder="30" value={landing} onChange={(e) => setLanding(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+            <span className="text-xs text-on-surface-variant shrink-0">°</span>
+          </div>
+        </Field>
+        <Field label="Vertical Drop">
+          <div className="flex items-center gap-2">
+            <input type="number" placeholder="4" value={drop} onChange={(e) => setDrop(parseFloat(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
+            <span className="text-xs text-on-surface-variant shrink-0">m</span>
+          </div>
+        </Field>
       </div>
-      <div className="flex gap-3">
-        <button onClick={onCancel} className="flex-1 py-2 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest">Cancel</button>
-        <button onClick={handleSave} className="flex-1 py-2 bg-primary text-on-primary font-bold text-xs rounded-lg hover:bg-primary/90">Save</button>
+      <div className="flex gap-3 pt-2">
+        <button onClick={onCancel} className="flex-1 py-2.5 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest">Cancel</button>
+        <button onClick={handleSave} className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-xs rounded-lg hover:bg-primary/90">Save Trail</button>
       </div>
     </div>
   );
@@ -223,12 +291,28 @@ function TrailCard({ preset }: { preset: SnowTrailPreset; key?: React.Key }) {
       <button onClick={() => deleteSnowTrailPreset(preset.id)} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
-      <h3 className="text-sm font-bold text-on-surface mb-2">{preset.name}</h3>
-      <div className="space-y-1 text-xs text-on-surface-variant">
-        <p>{preset.difficulty} • {preset.kickerType}</p>
-        <p>{preset.verticalDrop}m drop • {preset.snowCondition}</p>
-        <p>Takeoff {preset.takeoffAngle}° • Landing {preset.landingAngle}°</p>
+      <h3 className="text-sm font-bold text-on-surface mb-3">{preset.name}</h3>
+      <div className="space-y-2 text-xs text-on-surface-variant">
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Difficulty</span><span className="font-medium text-on-surface capitalize">{preset.difficulty}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Kicker Type</span><span className="font-medium text-on-surface capitalize">{preset.kickerType}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Snow Condition</span><span className="font-medium text-on-surface capitalize">{preset.snowCondition}</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Vertical Drop</span><span className="font-medium text-on-surface">{preset.verticalDrop} m</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Takeoff Angle</span><span className="font-medium text-on-surface">{preset.takeoffAngle}°</span></div>
+        <div className="flex justify-between"><span className="text-on-surface-variant/60">Landing Angle</span><span className="font-medium text-on-surface">{preset.landingAngle}°</span></div>
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// Shared Field Component
+// ============================================
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">{label}</label>
+      {children}
     </div>
   );
 }
