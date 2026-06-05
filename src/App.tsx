@@ -4,7 +4,6 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { ProtectedRoute, PublicOnlyRoute } from '@/components/ProtectedRoute';
 import { DebugPanel } from '@/components/DebugPanel';
 import { Sidebar } from '@/components/Sidebar';
-import { TopNav } from '@/components/TopNav';
 import { Simulation } from '@/views/Simulation';
 import { MoveDesigner } from '@/views/MoveDesigner';
 import { VideoAnalysis } from '@/views/VideoAnalysis';
@@ -21,7 +20,6 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background flex">
       <Sidebar />
       <main className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-        <TopNav />
         <div className="flex-1">
           {children}
         </div>
