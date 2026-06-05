@@ -10,6 +10,7 @@ export type Stance = 'regular' | 'goofy';
 export type KickerType = 'big-air' | 'slopestyle' | 'halfpipe' | 'rail' | 'kicker';
 export type SnowCondition = 'powder' | 'packed' | 'icy' | 'slush' | 'corduroy';
 export type Weather = 'clear' | 'cloudy' | 'foggy' | 'snowing' | 'windy';
+export type WindDirection = 'tailwind' | 'headwind' | 'right-crosswind' | 'left-crosswind';
 export type Visibility = 'excellent' | 'good' | 'fair' | 'poor';
 export type DangerLevel = 'low' | 'moderate' | 'high' | 'extreme';
 export type Severity = 'info' | 'warning' | 'critical';
@@ -49,6 +50,7 @@ export interface SessionContext {
   attemptNumber: number;
   previousSuccessRate: number;
   weather: Weather;
+  windDirection: WindDirection;
   visibility: Visibility;
   temperatureC: number;
   fatigueLevel: number;

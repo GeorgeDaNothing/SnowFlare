@@ -1,19 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Plus, Calendar, MapPin, Cloud, Filter, Trash2, ChevronRight, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, Star, Video, Wind, Thermometer, Snowflake } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Calendar, Cloud, Trash2, ChevronRight, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, Star, Video, Wind, Thermometer, Snowflake } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getTrainingLogs, saveTrainingLog, deleteTrainingLog, getMoves } from '@/lib/storage';
+import { getTrainingLogs, saveTrainingLog, deleteTrainingLog } from '@/lib/storage';
 import type { TrainingLog, TrainingLogMoveAttempt } from '@/types';
-
-function generateId() {
-  return Math.random().toString(36).substring(2, 10);
-}
 
 export function TrainingLogView() {
   const [logs, setLogs] = useState<TrainingLog[]>(getTrainingLogs);
   const [filter, setFilter] = useState<'all' | 'landed' | 'crashed' | 'injured' | 'favorites'>('all');
   const [viewingLog, setViewingLog] = useState<TrainingLog | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
 
   const filteredLogs = useMemo(() => {
     if (filter === 'all') return logs;
@@ -43,16 +38,6 @@ export function TrainingLogView() {
     }
   };
 
-  const handleSaveNew = (log: TrainingLog) => {
-    saveTrainingLog(log);
-    setLogs(getTrainingLogs());
-    setIsCreating(false);
-  };
-
-  if (isCreating) {
-    return <LogForm onSave={handleSaveNew} onCancel={() => setIsCreating(false)} />;
-  }
-
   if (viewingLog) {
     return <LogDetail log={viewingLog} onBack={() => setViewingLog(null)} onDelete={() => handleDelete(viewingLog.id)} onUpdate={(l) => { saveTrainingLog(l); setLogs(getTrainingLogs()); }} />;
   }
@@ -63,7 +48,7 @@ export function TrainingLogView() {
         <div>
           <span className="text-primary font-bold tracking-widest text-[10px] uppercase block mb-2">Training History</span>
           <h1 className="text-4xl font-bold tracking-tight text-on-surface">Training Log</h1>
-          <p className="text-on-surface-variant text-sm mt-1">Track your practice, outcomes, and progression.</p>
+          <p className="text-on-surface-variant text-sm mt-1">Sessions are created automatically from simulations.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex bg-surface-container-low rounded-lg p-1 border border-outline-variant/10">
@@ -73,15 +58,11 @@ export function TrainingLogView() {
               </button>
             ))}
           </div>
-          <button onClick={() => setIsCreating(true)} className="px-4 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors shadow-sm">
-            <Plus className="w-4 h-4" />
-            Log Session
-          </button>
         </div>
       </header>
 
       {logs.length === 0 ? (
-        <EmptyState onCreate={() => setIsCreating(true)} />
+        <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredLogs.map((log) => (
@@ -158,8 +139,6 @@ function LogCard({ log, onClick, onDelete, onToggleFavorite }: { log: TrainingLo
 // ============================================
 
 function LogDetail({ log, onBack, onDelete, onUpdate }: { log: TrainingLog; onBack: () => void; onDelete: () => void; onUpdate: (l: TrainingLog) => void }) {
-  const [videoInput, setVideoInput] = useState('');
-
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -255,163 +234,17 @@ function MoveAttemptRow({ attempt, index }: { attempt: TrainingLogMoveAttempt; i
   );
 }
 
-// ============================================
-// Log Form
-// ============================================
-
-function LogForm({ onSave, onCancel }: { onSave: (l: TrainingLog) => void; onCancel: () => void }) {
-  const savedMoves = getMoves();
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [location, setLocation] = useState('');
-  const [weather, setWeather] = useState('Clear');
-  const [windSpeed, setWindSpeed] = useState(10);
-  const [snowQuality, setSnowQuality] = useState('packed');
-  const [temperature, setTemperature] = useState(-5);
-  const [notes, setNotes] = useState('');
-  const [moves, setMoves] = useState<TrainingLogMoveAttempt[]>([]);
-
-  const addMoveFromPreset = (presetId: string) => {
-    const preset = savedMoves.find((m) => m.id === presetId);
-    if (!preset) return;
-    setMoves((prev) => [
-      ...prev,
-      {
-        moveId: preset.id,
-        moveName: preset.name,
-        config: preset.config,
-        preAnalysisRiskScore: preset.lastAnalysis?.overallRiskScore || 50,
-        landed: false,
-        injuryOccurred: false,
-        injuryType: null,
-        fatigueLevel: 3,
-        postNotes: '',
-      },
-    ]);
-  };
-
-  const updateMove = (idx: number, patch: Partial<TrainingLogMoveAttempt>) => {
-    setMoves((prev) => prev.map((m, i) => (i === idx ? { ...m, ...patch } : m)));
-  };
-
-  const handleSave = () => {
-    if (!date || !location) return;
-    onSave({
-      id: generateId(),
-      date,
-      location,
-      weather,
-      windSpeedKmh: windSpeed,
-      snowQuality,
-      temperatureC: temperature,
-      notes,
-      isFavorite: false,
-      videos: [],
-      moves,
-    });
-  };
-
-  return (
-    <div className="max-w-3xl mx-auto px-6 lg:px-12 py-8">
-      <h1 className="text-3xl font-bold text-on-surface mb-6">Log New Session</h1>
-      <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10 space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Date</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Location</label>
-            <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Whistler Blackcomb" className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Weather</label>
-            <input type="text" value={weather} onChange={(e) => setWeather(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Wind (km/h)</label>
-            <input type="number" value={windSpeed} onChange={(e) => setWindSpeed(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-          </div>
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Temp (°C)</label>
-            <input type="number" value={temperature} onChange={(e) => setTemperature(parseInt(e.target.value) || 0)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Snow Quality</label>
-          <div className="flex flex-wrap gap-2">
-            {['powder', 'packed', 'icy', 'slush', 'corduroy'].map((s) => (
-              <button key={s} onClick={() => setSnowQuality(s)} className={cn('px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-tighter transition-colors', snowQuality === s ? 'bg-tertiary text-on-tertiary' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high')}>
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="How did the session feel?" className="w-full h-20 px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary resize-none" />
-        </div>
-        {savedMoves.length > 0 && (
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">Add Move from Preset</label>
-            <div className="flex flex-wrap gap-2">
-              {savedMoves.map((m) => (
-                <button key={m.id} onClick={() => addMoveFromPreset(m.id)} className="px-3 py-1.5 bg-surface-container-high rounded-lg text-xs font-medium text-on-surface hover:bg-primary hover:text-on-primary transition-colors border border-outline-variant/10">
-                  + {m.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {moves.length > 0 && (
-          <div className="space-y-3">
-            <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant">Attempted Moves</label>
-            {moves.map((move, idx) => (
-              <div key={idx} className="p-4 bg-surface-container-high rounded-lg border border-outline-variant/10 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-on-surface">{move.moveName}</span>
-                  <button onClick={() => setMoves((prev) => prev.filter((_, i) => i !== idx))} className="text-on-surface-variant hover:text-error transition-colors text-xs">Remove</button>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={move.landed} onChange={(e) => updateMove(idx, { landed: e.target.checked })} className="accent-primary" />
-                    <span className="text-xs text-on-surface">Landed</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={move.injuryOccurred} onChange={(e) => updateMove(idx, { injuryOccurred: e.target.checked })} className="accent-error" />
-                    <span className="text-xs text-on-surface">Injury</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-on-surface-variant">Fatigue</span>
-                    <input type="number" min={0} max={10} value={move.fatigueLevel} onChange={(e) => updateMove(idx, { fatigueLevel: parseInt(e.target.value) || 0 })} className="w-12 px-1 py-0.5 rounded bg-surface-container text-xs text-on-surface outline-none border border-outline-variant/20" />
-                  </div>
-                </div>
-                <input type="text" value={move.postNotes} onChange={(e) => updateMove(idx, { postNotes: e.target.value })} placeholder="Post-attempt notes..." className="w-full px-3 py-2 rounded-lg bg-surface-container text-xs text-on-surface outline-none border border-outline-variant/20 focus:border-primary" />
-              </div>
-            ))}
-          </div>
-        )}
-        <div className="flex gap-3 pt-2">
-          <button onClick={onCancel} className="flex-1 py-2.5 bg-surface-container-high text-on-surface font-bold text-sm rounded-lg hover:bg-surface-container-highest">Cancel</button>
-          <button onClick={handleSave} disabled={!date || !location} className="flex-1 py-2.5 bg-primary text-on-primary font-bold text-sm rounded-lg hover:bg-primary/90 disabled:opacity-50">Save Session</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState({ onCreate }: { onCreate: () => void }) {
+function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
       <div className="w-16 h-16 bg-surface-container-high rounded-full flex items-center justify-center mb-4">
         <Calendar className="w-8 h-8 text-on-surface-variant" />
       </div>
       <h3 className="text-lg font-bold text-on-surface mb-2">No training logs yet</h3>
-      <p className="text-sm text-on-surface-variant max-w-md mb-6">Start tracking your training to build a personal risk profile and receive AI-powered trend insights.</p>
-      <button onClick={onCreate} className="px-6 py-3 bg-primary text-on-primary font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
-        <Plus className="w-4 h-4" /> Log Your First Session
-      </button>
+      <p className="text-sm text-on-surface-variant max-w-md mb-6">Run a simulation to automatically create your first training log.</p>
+      <a href="#/" className="px-6 py-3 bg-primary text-on-primary font-bold rounded-lg flex items-center gap-2 hover:bg-primary/90 transition-colors">
+        Start Simulation
+      </a>
     </div>
   );
 }

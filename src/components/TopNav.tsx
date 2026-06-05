@@ -1,19 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, LogOut, User, ChevronDown } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
-const navLinks = [
-  { label: 'Simulation', path: '/' },
-  { label: 'Move Designer', path: '/designer' },
-  { label: 'Video Analysis', path: '/analysis' },
-  { label: 'Training Log', path: '/training-log' },
-];
-
 export function TopNav() {
-  const location = useLocation();
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -29,32 +20,7 @@ export function TopNav() {
   }, []);
 
   return (
-    <nav className="bg-surface/80 backdrop-blur-md shadow-sm docked full-width top-0 sticky z-50 flex justify-between items-center w-full px-6 py-3 max-w-full border-b border-outline-variant/10">
-      <div className="flex items-center gap-8">
-        <Link to="/" className="text-xl font-bold tracking-tighter text-on-surface">
-          Horizon Pulse
-        </Link>
-        <div className="hidden md:flex gap-6 items-center">
-          {navLinks.map((link) => {
-            const isActive = location.pathname === link.path;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={cn(
-                  "text-sm font-medium tracking-tight transition-all pb-1",
-                  isActive 
-                    ? "text-primary border-b-2 border-primary font-bold" 
-                    : "text-on-surface-variant hover:text-primary"
-                )}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-      
+    <nav className="bg-surface/80 backdrop-blur-md shadow-sm docked full-width top-0 sticky z-50 flex justify-end items-center w-full px-6 py-3 max-w-full border-b border-outline-variant/10">
       <div className="flex items-center gap-4">
         <button className="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full">
           <Bell className="w-5 h-5" />

@@ -5,10 +5,11 @@ import {
   History, 
   BookOpen, 
   Settings,
-  HelpCircle, 
-  Play
+  LogOut,
+  User,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { icon: Home, label: 'Simulation', path: '/' },
@@ -19,10 +20,20 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const { logout } = useAuth();
 
   return (
-    <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant/10 pt-16">
-      <div className="px-6 py-8">
+    <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant/10">
+      {/* Brand */}
+      <div className="px-6 py-5 border-b border-outline-variant/10">
+        <Link to="/" className="text-xl font-bold tracking-tighter text-on-surface">
+          Horizon Pulse
+        </Link>
+        <p className="text-[10px] text-on-surface-variant mt-0.5 tracking-wider uppercase">Snowboarding Simulator</p>
+      </div>
+
+      {/* Nav */}
+      <div className="px-6 py-6 flex-1">
         <nav className="space-y-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -45,18 +56,19 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="mt-auto px-6 py-8 space-y-4">
-        <Link to="/designer" className="w-full py-3 bg-primary bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold rounded-lg shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">
-          <Play className="w-4 h-4 fill-current" />
-          Move Designer
+      {/* Bottom Actions */}
+      <div className="px-6 py-5 border-t border-outline-variant/10 space-y-1">
+        <Link to="/profile" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
+          <User className="w-5 h-5" />
+          Profile
         </Link>
-        
-        <div className="pt-4 border-t border-outline-variant/20">
-          <a className="flex items-center gap-3 text-on-surface-variant px-4 py-2 hover:translate-x-1 duration-200 text-sm" href="#">
-            <HelpCircle className="w-4 h-4" />
-            Support
-          </a>
-        </div>
+        <button 
+          onClick={logout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-error hover:bg-error-container/50 transition-all"
+        >
+          <LogOut className="w-5 h-5" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );

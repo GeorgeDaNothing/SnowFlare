@@ -174,6 +174,18 @@ export function analyzeMove(request: MoveAnalysisRequest): MoveAnalysisResponse 
     });
   }
 
+  // --- Wind Direction Risk ---
+  const windDirectionRisk = getWindDirectionRisk(context.windDirection || 'tailwind', context.weather);
+  if (windDirectionRisk > 15) {
+    riskFactors.push({
+      category: 'environment',
+      severity: windDirectionRisk > 25 ? 'critical' : 'warning',
+      title: 'Adverse Wind Direction',
+      description: `${context.windDirection || 'tailwind'} at ${context.weather === 'windy' ? 'high' : 'moderate'} speed can destabilize rotation and push you off axis.`,
+      recommendation: 'Consider waiting for calmer conditions or reducing rotation complexity.',
+    });
+  }
+
   // --- Environment Risk ---
   const envMultiplier = getEnvironmentMultiplier(context.weather, context.visibility);
   if (envMultiplier > 1.3) {
@@ -194,7 +206,7 @@ export function analyzeMove(request: MoveAnalysisRequest): MoveAnalysisResponse 
   }
 
   // --- Overall Scoring ---
-  const rawScore = Math.max(rotationRisk, totalInversionRisk, totalLandingRisk, speedRisk) * envMultiplier;
+  const rawScore = Math.max(rotationRisk, totalInversionRisk, totalLandingRisk, speedRisk, windDirectionRisk) * envMultiplier;
   const fatigueMultiplier = 1 + (context.fatigueLevel / 20);
   const overallRiskScore = Math.min(100, Math.round(rawScore * fatigueMultiplier));
 
@@ -236,6 +248,19 @@ function getExpectedDifficultyForLevel(level: string): number {
     case 'pro': return 90;
     default: return 50;
   }
+}
+
+function getWindDirectionRisk(direction: string, weather: string): number {
+  let base = 0;
+  switch (direction) {
+    case 'headwind': base = 15; break;
+    case 'right-crosswind':
+    case 'left-crosswind': base = 20; break;
+    case 'tailwind': base = 5; break;
+    default: base = 5;
+  }
+  if (weather === 'windy') base *= 1.5;
+  return base;
 }
 
 function getEnvironmentMultiplier(weather: string, visibility: string): number {

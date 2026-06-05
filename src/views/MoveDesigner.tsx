@@ -63,6 +63,7 @@ function getDefaultRequest(): MoveAnalysisRequest {
       attemptNumber: 1,
       previousSuccessRate: 0.6,
       weather: 'clear',
+      windDirection: 'tailwind',
       visibility: 'good',
       temperatureC: -5,
       fatigueLevel: 3,

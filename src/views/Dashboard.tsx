@@ -184,7 +184,7 @@ export function Dashboard() {
                         {total > 0 ? Math.round((landed / total) * 100) : 0}
                       </div>
                       <div className="flex-1">
-                        <h4 className="text-sm font-bold text-on-surface">{session.location || 'Session'}</h4>
+                        <h4 className="text-sm font-bold text-on-surface">{session.location || 'Training'}</h4>
                         <p className="text-xs text-on-surface-variant">{new Date(session.date).toLocaleDateString()} • {landed}/{total} landed</p>
                       </div>
                       <ChevronRight className="w-5 h-5 text-on-surface-variant/40 group-hover:text-primary transition-colors" />
@@ -213,7 +213,7 @@ export function Dashboard() {
                     <ShieldCheck className="w-4 h-4 text-tertiary" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-bold text-on-surface">Log a Session</p>
+                    <p className="text-sm font-bold text-on-surface">View Training Log</p>
                     <p className="text-xs text-on-surface-variant">Record outcomes</p>
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-on-surface-variant group-hover:text-primary transition-colors" />
@@ -251,7 +251,7 @@ function EmptyDashboard() {
                 Design First Move
               </a>
               <a href="#/sessions" className="px-6 py-3 bg-on-primary/10 text-on-primary font-bold rounded-lg text-sm hover:bg-on-primary/20 transition-colors flex items-center gap-2 border border-on-primary/20">
-                Log Session
+                View Training Log
               </a>
             </div>
           </div>
