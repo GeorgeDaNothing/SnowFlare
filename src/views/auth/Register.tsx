@@ -65,7 +65,7 @@ export function Register() {
     setStep(2);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -75,8 +75,8 @@ export function Register() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const result = register(
+    try {
+      const result = await register(
         name,
         email,
         password,
@@ -87,8 +87,11 @@ export function Register() {
       } else {
         setError(result.message);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed.');
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   if (success) {

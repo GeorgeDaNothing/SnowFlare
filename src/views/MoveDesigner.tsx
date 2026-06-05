@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   RotateCw,
@@ -38,8 +38,7 @@ function generateId() {
   return Math.random().toString(36).substring(2, 10);
 }
 
-function getDefaultRequest(): MoveAnalysisRequest {
-  const rider = getRiderProfile();
+function getDefaultRequest(rider?: MoveAnalysisRequest['rider']): MoveAnalysisRequest {
   return {
     move: {
       name: 'Custom Move',
@@ -58,7 +57,17 @@ function getDefaultRequest(): MoveAnalysisRequest {
       verticalDrop: 4,
       snowCondition: 'packed',
     },
-    rider,
+    rider: rider || {
+      name: '',
+      experienceLevel: 'intermediate',
+      yearsExperience: 2,
+      heightCm: 175,
+      weightKg: 70,
+      stance: 'regular',
+      dominantFoot: 'right',
+      preferredDiscipline: 'Freestyle',
+      recentInjuries: [],
+    },
     context: {
       attemptNumber: 1,
       previousSuccessRate: 0.6,
@@ -79,11 +88,17 @@ const DANGER_COLORS: Record<DangerLevel, { bg: string; text: string; border: str
 };
 
 export function MoveDesigner() {
-  const [request, setRequest] = useState<MoveAnalysisRequest>(getDefaultRequest);
+  const [request, setRequest] = useState<MoveAnalysisRequest>(getDefaultRequest());
   const [analysis, setAnalysis] = useState<MoveAnalysisResponse | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  useEffect(() => {
+    getRiderProfile().then((rider) => {
+      setRequest((prev) => ({ ...prev, rider }));
+    });
+  }, []);
 
   const updateMove = useCallback((patch: Partial<MoveAnalysisRequest['move']>) => {
     setRequest((prev) => {
@@ -105,7 +120,7 @@ export function MoveDesigner() {
   const updateRider = useCallback((patch: Partial<MoveAnalysisRequest['rider']>) => {
     setRequest((prev) => {
       const next = { ...prev, rider: { ...prev.rider, ...patch } };
-      saveRiderProfile(next.rider);
+      saveRiderProfile(next.rider).catch(() => {});
       return next;
     });
     setAnalysis(null);
@@ -134,7 +149,7 @@ export function MoveDesigner() {
     setIsAnalyzing(false);
   }, [request]);
 
-  const handleSavePreset = useCallback(() => {
+  const handleSavePreset = useCallback(async () => {
     const preset = {
       id: generateId(),
       name: request.move.name,
@@ -143,7 +158,7 @@ export function MoveDesigner() {
       config: request,
       lastAnalysis: analysis,
     };
-    saveMove(preset);
+    await saveMove(preset as any);
     setSaveMessage('Preset saved!');
     setTimeout(() => setSaveMessage(''), 2000);
   }, [request, analysis]);

@@ -9,21 +9,24 @@ export function DebugPanel() {
   const [editJson, setEditJson] = useState('');
   const [message, setMessage] = useState('');
   const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>({});
+  const [storageData, setStorageData] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     refreshData();
   }, []);
 
-  function refreshData() {
-    const data = getAllStorage();
+  async function refreshData() {
+    const data = await getAllStorage();
+    setStorageData(data);
     const pretty = JSON.stringify(data, null, 2);
     setRawJson(pretty);
     setEditJson(pretty);
     setMessage('');
   }
 
-  function handleExport() {
-    const blob = new Blob([exportAllStorage()], { type: 'application/json' });
+  async function handleExport() {
+    const json = await exportAllStorage();
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -42,13 +45,13 @@ export function DebugPanel() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (ev) => {
+      reader.onload = async (ev) => {
         const text = String(ev.target?.result || '');
-        if (importAllStorage(text)) {
+        if (await importAllStorage(text)) {
           refreshData();
           setMessage('Imported successfully');
         } else {
-          setMessage('Import failed: invalid JSON');
+          setMessage('Import failed: invalid JSON or server mode');
         }
         setTimeout(() => setMessage(''), 3000);
       };
@@ -57,13 +60,13 @@ export function DebugPanel() {
     input.click();
   }
 
-  function handleSaveEdits() {
+  async function handleSaveEdits() {
     try {
       const parsed = JSON.parse(editJson);
       Object.entries(parsed).forEach(([key, value]) => {
         setStorageKey(key, value);
       });
-      setMessage('Saved to localStorage');
+      setMessage('Saved to server (where supported)');
       refreshData();
     } catch {
       setMessage('Invalid JSON — not saved');
@@ -134,7 +137,7 @@ export function DebugPanel() {
 
             {/* Structured View */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {Object.entries(getAllStorage()).map(([key, value]) => (
+              {Object.entries(storageData).map(([key, value]) => (
                 <div key={key} className="border border-outline-variant/10 rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleKey(key)}
@@ -168,7 +171,7 @@ export function DebugPanel() {
                 onClick={handleSaveEdits}
                 className="w-full py-2 bg-primary text-on-primary text-xs font-bold rounded-lg hover:bg-primary/90 transition-colors"
               >
-                Save Edits to localStorage
+                Save Edits to Server
               </button>
             </div>
           </motion.div>

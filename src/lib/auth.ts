@@ -1,3 +1,5 @@
+import { apiAuth, setToken, clearToken } from './api';
+
 export interface User {
   id: string;
   name: string;
@@ -11,107 +13,71 @@ export interface SecurityQuestion {
   answer: string;
 }
 
-export interface StoredUser extends User {
-  password: string;
-  securityQuestions: SecurityQuestion[];
-  resetToken?: string;
-  resetTokenExpiry?: string;
-}
-
-const USERS_KEY = 'hp_users';
-const CURRENT_USER_KEY = 'hp_current_user';
 const REMEMBER_ME_KEY = 'hp_remember_me';
 
-function getUsers(): StoredUser[] {
-  try {
-    const data = localStorage.getItem(USERS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function generateId(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-function generateToken(): string {
-  return Math.random().toString(36).substring(2, 18) + Date.now().toString(36);
-}
-
 export const authService = {
-  register(
+  async register(
     name: string,
     email: string,
     password: string,
     securityQuestions: SecurityQuestion[]
-  ): { success: boolean; message: string } {
-    const users = getUsers();
-    const normalizedEmail = email.toLowerCase().trim();
-
-    if (users.some((u) => u.email.toLowerCase() === normalizedEmail)) {
-      return { success: false, message: 'An account with this email already exists.' };
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await apiAuth.register(name, email, password, securityQuestions);
+      return { success: res.success, message: res.message };
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Registration failed.' };
     }
-
-    const newUser: StoredUser = {
-      id: generateId(),
-      name: name.trim(),
-      email: normalizedEmail,
-      password,
-      securityQuestions: securityQuestions.map((sq) => ({
-        question: sq.question,
-        answer: sq.answer.toLowerCase().trim(),
-      })),
-      createdAt: new Date().toISOString(),
-    };
-
-    users.push(newUser);
-    saveUsers(users);
-
-    return { success: true, message: 'Account created successfully!' };
   },
 
-  login(email: string, password: string, rememberMe: boolean): { success: boolean; user?: User; message: string } {
-    const users = getUsers();
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = users.find((u) => u.email.toLowerCase() === normalizedEmail);
-
-    if (!user) {
-      return { success: false, message: 'No account found with this email address.' };
+  async login(
+    email: string,
+    password: string,
+    rememberMe: boolean
+  ): Promise<{ success: boolean; user?: User; message: string }> {
+    try {
+      const res = await apiAuth.login(email, password);
+      if (res.success && res.token && res.user) {
+        setToken(res.token);
+        if (rememberMe) {
+          localStorage.setItem(REMEMBER_ME_KEY, 'true');
+        }
+        return {
+          success: true,
+          user: {
+            id: res.user.id,
+            name: res.user.name,
+            email: res.user.email,
+            avatar: res.user.avatar,
+            createdAt: res.user.createdAt,
+          },
+          message: res.message,
+        };
+      }
+      return { success: false, message: res.message };
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Login failed.' };
     }
-
-    if (user.password !== password) {
-      return { success: false, message: 'Incorrect password. Please try again.' };
-    }
-
-    const { password: _, resetToken, resetTokenExpiry, securityQuestions, ...safeUser } = user;
-
-    const sessionUser = {
-      ...safeUser,
-      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(safeUser.name)}&background=ab3500&color=fff`,
-    };
-
-    if (rememberMe) {
-      localStorage.setItem(REMEMBER_ME_KEY, 'true');
-    }
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(sessionUser));
-
-    return { success: true, user: sessionUser, message: 'Welcome back!' };
   },
 
   logout() {
-    localStorage.removeItem(CURRENT_USER_KEY);
+    clearToken();
     localStorage.removeItem(REMEMBER_ME_KEY);
   },
 
-  getCurrentUser(): User | null {
+  async getCurrentUser(): Promise<User | null> {
     try {
-      const data = localStorage.getItem(CURRENT_USER_KEY);
-      return data ? JSON.parse(data) : null;
+      const res = await apiAuth.me();
+      if (res.success && res.user) {
+        return {
+          id: res.user.id,
+          name: res.user.name,
+          email: res.user.email,
+          avatar: res.user.avatar,
+          createdAt: res.user.createdAt,
+        };
+      }
+      return null;
     } catch {
       return null;
     }
@@ -121,115 +87,54 @@ export const authService = {
     return localStorage.getItem(REMEMBER_ME_KEY) === 'true';
   },
 
-  requestPasswordReset(email: string): { success: boolean; message: string; token?: string } {
-    const users = getUsers();
-    const normalizedEmail = email.toLowerCase().trim();
-    const userIndex = users.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
-
-    if (userIndex === -1) {
-      return { success: false, message: 'No account found with this email address.' };
+  async requestPasswordReset(email: string): Promise<{ success: boolean; message: string; token?: string }> {
+    try {
+      const res = await apiAuth.requestReset(email);
+      return { success: res.success, message: res.message, token: res.token };
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Request failed.' };
     }
-
-    const token = generateToken();
-    users[userIndex].resetToken = token;
-    users[userIndex].resetTokenExpiry = new Date(Date.now() + 3600000).toISOString(); // 1 hour
-    saveUsers(users);
-
-    return {
-      success: true,
-      message: 'Reset link sent! Use the code below to reset your password.',
-      token,
-    };
   },
 
-  getSecurityQuestions(email: string): { success: boolean; questions?: string[]; message: string } {
-    const users = getUsers();
-    const normalizedEmail = email.toLowerCase().trim();
-    const user = users.find((u) => u.email.toLowerCase() === normalizedEmail);
-
-    if (!user) {
-      return { success: false, message: 'No account found with this email address.' };
+  async getSecurityQuestions(email: string): Promise<{ success: boolean; questions?: string[]; message: string }> {
+    try {
+      const res = await apiAuth.getSecurityQuestions(email);
+      return { success: res.success, questions: res.questions, message: res.message };
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Request failed.' };
     }
-
-    return {
-      success: true,
-      questions: user.securityQuestions.map((sq) => sq.question),
-      message: 'Security questions retrieved.',
-    };
   },
 
-  verifySecurityAnswers(email: string, answers: string[]): { success: boolean; message: string; token?: string } {
-    const users = getUsers();
-    const normalizedEmail = email.toLowerCase().trim();
-    const userIndex = users.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
-
-    if (userIndex === -1) {
-      return { success: false, message: 'No account found with this email address.' };
+  async verifySecurityAnswers(
+    email: string,
+    answers: string[]
+  ): Promise<{ success: boolean; message: string; token?: string }> {
+    try {
+      const res = await apiAuth.verifySecurityAnswers(email, answers);
+      return { success: res.success, message: res.message, token: res.token };
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Verification failed.' };
     }
-
-    const user = users[userIndex];
-    const normalizedAnswers = answers.map((a) => a.toLowerCase().trim());
-
-    const allCorrect = user.securityQuestions.every((sq, idx) => sq.answer === normalizedAnswers[idx]);
-
-    if (!allCorrect) {
-      return { success: false, message: 'One or more answers are incorrect.' };
-    }
-
-    const token = generateToken();
-    users[userIndex].resetToken = token;
-    users[userIndex].resetTokenExpiry = new Date(Date.now() + 3600000).toISOString();
-    saveUsers(users);
-
-    return {
-      success: true,
-      message: 'Answers verified! You can now reset your password.',
-      token,
-    };
   },
 
-  resetPassword(token: string, newPassword: string): { success: boolean; message: string } {
-    const users = getUsers();
-    const userIndex = users.findIndex((u) => u.resetToken === token);
-
-    if (userIndex === -1) {
-      return { success: false, message: 'Invalid or expired reset token.' };
+  async resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const res = await apiAuth.resetPassword(token, newPassword);
+      return { success: res.success, message: res.message };
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Reset failed.' };
     }
-
-    const expiry = new Date(users[userIndex].resetTokenExpiry!);
-    if (expiry < new Date()) {
-      return { success: false, message: 'Reset token has expired. Please request a new one.' };
-    }
-
-    users[userIndex].password = newPassword;
-    users[userIndex].resetToken = undefined;
-    users[userIndex].resetTokenExpiry = undefined;
-    saveUsers(users);
-
-    return { success: true, message: 'Password reset successfully! You can now log in.' };
   },
 
-  updateProfile(userId: string, updates: Partial<Pick<User, 'name'>>): { success: boolean; message: string } {
-    const users = getUsers();
-    const userIndex = users.findIndex((u) => u.id === userId);
-
-    if (userIndex === -1) {
-      return { success: false, message: 'User not found.' };
+  async updateProfile(userId: string, updates: Partial<Pick<User, 'name'>>): Promise<{ success: boolean; message: string }> {
+    try {
+      if (!updates.name) {
+        return { success: false, message: 'Name is required.' };
+      }
+      const res = await apiAuth.updateProfile(updates.name);
+      return { success: res.success, message: res.message };
+    } catch (err) {
+      return { success: false, message: err instanceof Error ? err.message : 'Update failed.' };
     }
-
-    if (updates.name) {
-      users[userIndex].name = updates.name.trim();
-    }
-
-    saveUsers(users);
-
-    // Update current session
-    const current = this.getCurrentUser();
-    if (current && current.id === userId) {
-      const updated = { ...current, ...updates };
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updated));
-    }
-
-    return { success: true, message: 'Profile updated successfully.' };
   },
 };

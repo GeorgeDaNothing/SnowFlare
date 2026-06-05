@@ -1,3 +1,17 @@
+/**
+ * Server-backed storage layer.
+ * All CRUD operations are now async and call the Horizon Pulse API.
+ * Legacy localStorage keys are no longer used for app data.
+ */
+
+import {
+  apiMoves,
+  apiLogs,
+  apiPresets,
+  apiProfile,
+  apiCache,
+  type ApiLog,
+} from './api';
 import type {
   SavedMove,
   TrainingLog,
@@ -10,109 +24,123 @@ import type {
   SnowTrailPreset,
 } from '@/types';
 
-const KEYS = {
-  MOVES: 'hp_moves',
-  TRAINING_LOGS: 'hp_training_logs',
-  RIDER_PROFILE: 'hp_rider_profile',
-  ANALYSIS_CACHE: 'hp_analysis_cache',
-  PRESETS: 'hp_presets',
-  // Legacy migration keys
-  LEGACY_SESSIONS: 'hp_sessions',
-} as const;
-
-function getItem<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function setItem<T>(key: string, value: T): void {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-// ============================================
-// Migration: hp_sessions → hp_training_logs
-// ============================================
-
-(function migrateSessionsToTrainingLogs() {
-  const legacy = localStorage.getItem(KEYS.LEGACY_SESSIONS);
-  if (legacy) {
-    try {
-      const oldSessions = JSON.parse(legacy);
-      if (Array.isArray(oldSessions) && oldSessions.length > 0) {
-        const migrated: TrainingLog[] = oldSessions.map((s: Record<string, unknown>) => ({
-          ...(s as unknown as TrainingLog),
-          windSpeedKmh: 0,
-          snowQuality: 'packed',
-          isFavorite: false,
-          videos: [],
-        }));
-        setItem(KEYS.TRAINING_LOGS, migrated);
-      }
-      localStorage.removeItem(KEYS.LEGACY_SESSIONS);
-    } catch {
-      localStorage.removeItem(KEYS.LEGACY_SESSIONS);
-    }
-  }
-})();
-
 // ============================================
 // Moves
 // ============================================
 
-export function getMoves(): SavedMove[] {
-  return getItem<SavedMove[]>(KEYS.MOVES, []);
+export async function getMoves(): Promise<SavedMove[]> {
+  const res = await apiMoves.list();
+  return res.moves.map((m) => ({
+    id: m.id,
+    name: m.name,
+    config: m.config as SavedMove['config'],
+    lastAnalysis: m.lastAnalysis as SavedMove['lastAnalysis'],
+    createdAt: m.createdAt,
+    updatedAt: m.updatedAt,
+  }));
 }
 
-export function saveMove(move: SavedMove): void {
-  const moves = getMoves();
-  const idx = moves.findIndex((m) => m.id === move.id);
-  if (idx >= 0) {
-    moves[idx] = move;
+export async function saveMove(move: SavedMove): Promise<void> {
+  const existing = await getMoves();
+  const isUpdate = existing.some((m) => m.id === move.id);
+  if (isUpdate) {
+    await apiMoves.update(move.id, {
+      name: move.name,
+      config: move.config,
+      lastAnalysis: move.lastAnalysis,
+    });
   } else {
-    moves.push(move);
+    await apiMoves.create({
+      id: move.id,
+      name: move.name,
+      config: move.config,
+      lastAnalysis: move.lastAnalysis,
+    });
   }
-  setItem(KEYS.MOVES, moves);
 }
 
-export function deleteMove(id: string): void {
-  const moves = getMoves().filter((m) => m.id !== id);
-  setItem(KEYS.MOVES, moves);
+export async function deleteMove(id: string): Promise<void> {
+  await apiMoves.delete(id);
 }
 
-export function getMoveById(id: string): SavedMove | undefined {
-  return getMoves().find((m) => m.id === id);
+export async function getMoveById(id: string): Promise<SavedMove | undefined> {
+  try {
+    const res = await apiMoves.get(id);
+    return {
+      id: res.move.id,
+      name: res.move.name,
+      config: res.move.config as SavedMove['config'],
+      lastAnalysis: res.move.lastAnalysis as SavedMove['lastAnalysis'],
+      createdAt: res.move.createdAt,
+      updatedAt: res.move.updatedAt,
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 // ============================================
 // Training Logs
 // ============================================
 
-export function getTrainingLogs(): TrainingLog[] {
-  return getItem<TrainingLog[]>(KEYS.TRAINING_LOGS, []);
+function apiLogToTrainingLog(log: ApiLog): TrainingLog {
+  return {
+    id: log.id,
+    date: log.date,
+    location: log.location || '',
+    weather: (log.weather as TrainingLog['weather']) || 'clear',
+    windSpeedKmh: log.windSpeedKmh ?? 0,
+    snowQuality: (log.snowQuality as TrainingLog['snowQuality']) || 'packed',
+    temperatureC: log.temperatureC ?? 0,
+    notes: '',
+    moves: (log.moves as TrainingLog['moves']) || [],
+    isFavorite: log.isFavorite,
+    videos: Array.isArray(log.videos)
+      ? log.videos.map((v) => (typeof v === 'string' ? v : (v as { data: string }).data))
+      : [],
+  };
 }
 
-export function saveTrainingLog(log: TrainingLog): void {
-  const logs = getTrainingLogs();
-  const idx = logs.findIndex((l) => l.id === log.id);
-  if (idx >= 0) {
-    logs[idx] = log;
+export async function getTrainingLogs(): Promise<TrainingLog[]> {
+  const res = await apiLogs.list();
+  return res.logs.map(apiLogToTrainingLog);
+}
+
+export async function saveTrainingLog(log: TrainingLog): Promise<void> {
+  const existing = await getTrainingLogs();
+  const isUpdate = existing.some((l) => l.id === log.id);
+
+  const payload: Omit<ApiLog, 'createdAt'> = {
+    id: log.id,
+    date: log.date,
+    location: log.location || null,
+    weather: log.weather || null,
+    windSpeedKmh: log.windSpeedKmh ?? null,
+    snowQuality: log.snowQuality || null,
+    temperatureC: log.temperatureC ?? null,
+    moves: log.moves || [],
+    isFavorite: log.isFavorite,
+    videos: log.videos || [],
+  };
+
+  if (isUpdate) {
+    await apiLogs.update(log.id, payload);
   } else {
-    logs.push(log);
+    await apiLogs.create(payload);
   }
-  setItem(KEYS.TRAINING_LOGS, logs);
 }
 
-export function deleteTrainingLog(id: string): void {
-  const logs = getTrainingLogs().filter((l) => l.id !== id);
-  setItem(KEYS.TRAINING_LOGS, logs);
+export async function deleteTrainingLog(id: string): Promise<void> {
+  await apiLogs.delete(id);
 }
 
-export function getTrainingLogById(id: string): TrainingLog | undefined {
-  return getTrainingLogs().find((l) => l.id === id);
+export async function getTrainingLogById(id: string): Promise<TrainingLog | undefined> {
+  try {
+    const res = await apiLogs.get(id);
+    return apiLogToTrainingLog(res.log);
+  } catch {
+    return undefined;
+  }
 }
 
 // ============================================
@@ -131,34 +159,43 @@ const DEFAULT_RIDER_PROFILE: RiderProfile = {
   recentInjuries: [],
 };
 
-export function getRiderProfile(): RiderProfile {
-  return getItem<RiderProfile>(KEYS.RIDER_PROFILE, DEFAULT_RIDER_PROFILE);
+export async function getRiderProfile(): Promise<RiderProfile> {
+  try {
+    const res = await apiProfile.get();
+    return (res.profile as RiderProfile) || DEFAULT_RIDER_PROFILE;
+  } catch {
+    return DEFAULT_RIDER_PROFILE;
+  }
 }
 
-export function saveRiderProfile(profile: RiderProfile): void {
-  setItem(KEYS.RIDER_PROFILE, profile);
+export async function saveRiderProfile(profile: RiderProfile): Promise<void> {
+  await apiProfile.save(profile);
 }
 
 // ============================================
 // Analysis Cache
 // ============================================
 
-export function getAnalysisCache(): AnalysisCache {
-  return getItem<AnalysisCache>(KEYS.ANALYSIS_CACHE, {});
+export async function getAnalysisCache(): Promise<AnalysisCache> {
+  // Not exposed by server as a bulk endpoint; callers use getCachedAnalysis per-hash.
+  return {};
 }
 
-export function getCachedAnalysis(requestHash: string): AnalysisCacheEntry | undefined {
-  return getAnalysisCache()[requestHash];
+export async function getCachedAnalysis(requestHash: string): Promise<AnalysisCacheEntry | undefined> {
+  try {
+    const res = await apiCache.get(requestHash);
+    return res.result as AnalysisCacheEntry;
+  } catch {
+    return undefined;
+  }
 }
 
-export function setCachedAnalysis(requestHash: string, entry: AnalysisCacheEntry): void {
-  const cache = getAnalysisCache();
-  cache[requestHash] = entry;
-  setItem(KEYS.ANALYSIS_CACHE, cache);
+export async function setCachedAnalysis(requestHash: string, entry: AnalysisCacheEntry): Promise<void> {
+  await apiCache.set(requestHash, entry);
 }
 
-export function clearAnalysisCache(): void {
-  setItem(KEYS.ANALYSIS_CACHE, {});
+export async function clearAnalysisCache(): Promise<void> {
+  await apiCache.clear();
 }
 
 // ============================================
@@ -171,97 +208,154 @@ const DEFAULT_PRESETS: PresetsCollection = {
   trails: [],
 };
 
-export function getPresets(): PresetsCollection {
-  return getItem<PresetsCollection>(KEYS.PRESETS, DEFAULT_PRESETS);
-}
-
-export function savePresets(presets: PresetsCollection): void {
-  setItem(KEYS.PRESETS, presets);
-}
-
-export function addPersonalPreset(preset: PersonalPreset): void {
-  const presets = getPresets();
-  const idx = presets.personal.findIndex((p) => p.id === preset.id);
-  if (idx >= 0) {
-    // Merge to preserve any legacy dominantFoot data during transition
-    presets.personal[idx] = { ...presets.personal[idx], ...preset };
-  } else {
-    presets.personal.push(preset);
+export async function getPresets(): Promise<PresetsCollection> {
+  try {
+    const res = await apiPresets.list();
+    return {
+      personal: (res.presets.personal as PersonalPreset[]) || [],
+      board: (res.presets.board as BoardPreset[]) || [],
+      trails: (res.presets.trails as SnowTrailPreset[]) || [],
+    };
+  } catch {
+    return DEFAULT_PRESETS;
   }
-  savePresets(presets);
 }
 
-export function deletePersonalPreset(id: string): void {
-  const presets = getPresets();
-  presets.personal = presets.personal.filter((p) => p.id !== id);
-  savePresets(presets);
+export async function savePresets(presets: PresetsCollection): Promise<void> {
+  // Replace all presets. Since server stores individually, we upsert each.
+  const current = await getPresets();
+
+  // Personal
+  for (const p of presets.personal) {
+    const existing = current.personal.find((cp) => cp.id === p.id);
+    const data = { ...p };
+    delete (data as Record<string, unknown>).id;
+    delete (data as Record<string, unknown>).name;
+    delete (data as Record<string, unknown>).createdAt;
+    delete (data as Record<string, unknown>).updatedAt;
+    if (existing) {
+      await apiPresets.update(p.id, { type: 'personal', name: p.name, data });
+    } else {
+      await apiPresets.create({ id: p.id, type: 'personal', name: p.name, data });
+    }
+  }
+  for (const cp of current.personal) {
+    if (!presets.personal.find((p) => p.id === cp.id)) {
+      await apiPresets.delete(cp.id);
+    }
+  }
+
+  // Board
+  for (const p of presets.board) {
+    const existing = current.board.find((cp) => cp.id === p.id);
+    const data = { ...p };
+    delete (data as Record<string, unknown>).id;
+    delete (data as Record<string, unknown>).name;
+    delete (data as Record<string, unknown>).createdAt;
+    delete (data as Record<string, unknown>).updatedAt;
+    if (existing) {
+      await apiPresets.update(p.id, { type: 'board', name: p.name, data });
+    } else {
+      await apiPresets.create({ id: p.id, type: 'board', name: p.name, data });
+    }
+  }
+  for (const cp of current.board) {
+    if (!presets.board.find((p) => p.id === cp.id)) {
+      await apiPresets.delete(cp.id);
+    }
+  }
+
+  // Trails
+  for (const p of presets.trails) {
+    const existing = current.trails.find((cp) => cp.id === p.id);
+    const data = { ...p };
+    delete (data as Record<string, unknown>).id;
+    delete (data as Record<string, unknown>).name;
+    delete (data as Record<string, unknown>).createdAt;
+    delete (data as Record<string, unknown>).updatedAt;
+    if (existing) {
+      await apiPresets.update(p.id, { type: 'trail', name: p.name, data });
+    } else {
+      await apiPresets.create({ id: p.id, type: 'trail', name: p.name, data });
+    }
+  }
+  for (const cp of current.trails) {
+    if (!presets.trails.find((p) => p.id === cp.id)) {
+      await apiPresets.delete(cp.id);
+    }
+  }
 }
 
-export function addBoardPreset(preset: BoardPreset): void {
-  const presets = getPresets();
-  const idx = presets.board.findIndex((p) => p.id === preset.id);
-  if (idx >= 0) presets.board[idx] = preset;
-  else presets.board.push(preset);
-  savePresets(presets);
+export async function addPersonalPreset(preset: PersonalPreset): Promise<void> {
+  const data = { ...preset };
+  delete (data as Record<string, unknown>).id;
+  delete (data as Record<string, unknown>).name;
+  delete (data as Record<string, unknown>).createdAt;
+  delete (data as Record<string, unknown>).updatedAt;
+  await apiPresets.create({ id: preset.id, type: 'personal', name: preset.name, data });
 }
 
-export function deleteBoardPreset(id: string): void {
-  const presets = getPresets();
-  presets.board = presets.board.filter((p) => p.id !== id);
-  savePresets(presets);
+export async function deletePersonalPreset(id: string): Promise<void> {
+  await apiPresets.delete(id);
 }
 
-export function addSnowTrailPreset(preset: SnowTrailPreset): void {
-  const presets = getPresets();
-  const idx = presets.trails.findIndex((p) => p.id === preset.id);
-  if (idx >= 0) presets.trails[idx] = preset;
-  else presets.trails.push(preset);
-  savePresets(presets);
+export async function addBoardPreset(preset: BoardPreset): Promise<void> {
+  const data = { ...preset };
+  delete (data as Record<string, unknown>).id;
+  delete (data as Record<string, unknown>).name;
+  delete (data as Record<string, unknown>).createdAt;
+  delete (data as Record<string, unknown>).updatedAt;
+  await apiPresets.create({ id: preset.id, type: 'board', name: preset.name, data });
 }
 
-export function deleteSnowTrailPreset(id: string): void {
-  const presets = getPresets();
-  presets.trails = presets.trails.filter((p) => p.id !== id);
-  savePresets(presets);
+export async function deleteBoardPreset(id: string): Promise<void> {
+  await apiPresets.delete(id);
+}
+
+export async function addSnowTrailPreset(preset: SnowTrailPreset): Promise<void> {
+  const data = { ...preset };
+  delete (data as Record<string, unknown>).id;
+  delete (data as Record<string, unknown>).name;
+  delete (data as Record<string, unknown>).createdAt;
+  delete (data as Record<string, unknown>).updatedAt;
+  await apiPresets.create({ id: preset.id, type: 'trail', name: preset.name, data });
+}
+
+export async function deleteSnowTrailPreset(id: string): Promise<void> {
+  await apiPresets.delete(id);
 }
 
 // ============================================
-// Debug / Raw Access
+// Debug / Raw Access (legacy compat)
 // ============================================
 
-export function getAllStorage(): Record<string, unknown> {
+export async function getAllStorage(): Promise<Record<string, unknown>> {
+  const [moves, logs, profile, presets] = await Promise.all([
+    getMoves().catch(() => []),
+    getTrainingLogs().catch(() => []),
+    getRiderProfile().catch(() => DEFAULT_RIDER_PROFILE),
+    getPresets().catch(() => DEFAULT_PRESETS),
+  ]);
   return {
-    [KEYS.MOVES]: getMoves(),
-    [KEYS.TRAINING_LOGS]: getTrainingLogs(),
-    [KEYS.RIDER_PROFILE]: getRiderProfile(),
-    [KEYS.ANALYSIS_CACHE]: getAnalysisCache(),
-    [KEYS.PRESETS]: getPresets(),
+    moves,
+    training_logs: logs,
+    rider_profile: profile,
+    presets,
   };
 }
 
-export function setStorageKey(key: string, value: unknown): boolean {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-    return true;
-  } catch {
-    return false;
-  }
+export function setStorageKey(_key: string, _value: unknown): boolean {
+  // No-op in server mode; raw localStorage manipulation is disabled.
+  return false;
 }
 
-export function exportAllStorage(): string {
-  return JSON.stringify(getAllStorage(), null, 2);
+export async function exportAllStorage(): Promise<string> {
+  const data = await getAllStorage();
+  return JSON.stringify(data, null, 2);
 }
 
-export function importAllStorage(json: string): boolean {
-  try {
-    const data = JSON.parse(json);
-    if (data[KEYS.MOVES]) setItem(KEYS.MOVES, data[KEYS.MOVES]);
-    if (data[KEYS.TRAINING_LOGS]) setItem(KEYS.TRAINING_LOGS, data[KEYS.TRAINING_LOGS]);
-    if (data[KEYS.RIDER_PROFILE]) setItem(KEYS.RIDER_PROFILE, data[KEYS.RIDER_PROFILE]);
-    if (data[KEYS.ANALYSIS_CACHE]) setItem(KEYS.ANALYSIS_CACHE, data[KEYS.ANALYSIS_CACHE]);
-    if (data[KEYS.PRESETS]) setItem(KEYS.PRESETS, data[KEYS.PRESETS]);
-    return true;
-  } catch {
-    return false;
-  }
+export async function importAllStorage(_json: string): Promise<boolean> {
+  // Import via server is not supported from raw JSON for safety.
+  // Use individual create endpoints instead.
+  return false;
 }

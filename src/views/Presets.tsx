@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Layers, Mountain, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPresets, addPersonalPreset, addBoardPreset, addSnowTrailPreset, deletePersonalPreset, deleteBoardPreset, deleteSnowTrailPreset } from '@/lib/storage';
-import type { PersonalPreset, BoardPreset, SnowTrailPreset } from '@/types';
+import type { PersonalPreset, BoardPreset, SnowTrailPreset, PresetsCollection } from '@/types';
 
 function generateId() {
   return Math.random().toString(36).substring(2, 10);
@@ -14,7 +14,15 @@ type Tab = 'personal' | 'board' | 'trails';
 export function Presets() {
   const [activeTab, setActiveTab] = useState<Tab>('personal');
   const [isCreating, setIsCreating] = useState(false);
-  const presets = getPresets();
+  const [presets, setPresets] = useState<PresetsCollection>({ personal: [], board: [], trails: [] });
+
+  const reload = async () => {
+    setPresets(await getPresets());
+  };
+
+  useEffect(() => {
+    reload();
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto px-6 lg:px-12 py-8">
@@ -48,18 +56,18 @@ export function Presets() {
       <AnimatePresence>
         {isCreating && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-6">
-            {activeTab === 'personal' && <PersonalForm onSave={() => setIsCreating(false)} onCancel={() => setIsCreating(false)} />}
-            {activeTab === 'board' && <BoardForm onSave={() => setIsCreating(false)} onCancel={() => setIsCreating(false)} />}
-            {activeTab === 'trails' && <TrailForm onSave={() => setIsCreating(false)} onCancel={() => setIsCreating(false)} />}
+            {activeTab === 'personal' && <PersonalForm onSave={() => { setIsCreating(false); reload(); }} onCancel={() => setIsCreating(false)} />}
+            {activeTab === 'board' && <BoardForm onSave={() => { setIsCreating(false); reload(); }} onCancel={() => setIsCreating(false)} />}
+            {activeTab === 'trails' && <TrailForm onSave={() => { setIsCreating(false); reload(); }} onCancel={() => setIsCreating(false)} />}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Lists */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {activeTab === 'personal' && presets.personal.map((p) => <PersonalCard key={p.id} preset={p} />)}
-        {activeTab === 'board' && presets.board.map((b) => <BoardCard key={b.id} preset={b} />)}
-        {activeTab === 'trails' && presets.trails.map((t) => <TrailCard key={t.id} preset={t} />)}
+        {activeTab === 'personal' && presets.personal.map((p) => <PersonalCard key={p.id} preset={p} onDelete={reload} />)}
+        {activeTab === 'board' && presets.board.map((b) => <BoardCard key={b.id} preset={b} onDelete={reload} />)}
+        {activeTab === 'trails' && presets.trails.map((t) => <TrailCard key={t.id} preset={t} onDelete={reload} />)}
       </div>
 
       {((activeTab === 'personal' && presets.personal.length === 0) ||
@@ -84,8 +92,8 @@ function PersonalForm({ onSave, onCancel }: { onSave: () => void; onCancel: () =
   const [experience, setExperience] = useState('intermediate');
   const [stance, setStance] = useState('regular');
 
-  const handleSave = () => {
-    addPersonalPreset({ id: generateId(), name: name || 'Unnamed', weightKg: weight, heightCm: height, experienceLevel: experience as any, stance: stance as any });
+  const handleSave = async () => {
+    await addPersonalPreset({ id: generateId(), name: name || 'Unnamed', weightKg: weight, heightCm: height, experienceLevel: experience as any, stance: stance as any });
     onSave();
   };
 
@@ -127,10 +135,10 @@ function PersonalForm({ onSave, onCancel }: { onSave: () => void; onCancel: () =
   );
 }
 
-function PersonalCard({ preset }: { preset: PersonalPreset; key?: React.Key }) {
+function PersonalCard({ preset, onDelete }: { preset: PersonalPreset; onDelete: () => void | Promise<void>; key?: React.Key }) {
   return (
     <div className="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10 relative group">
-      <button onClick={() => deletePersonalPreset(preset.id)} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
+      <button onClick={async () => { await deletePersonalPreset(preset.id); onDelete(); }} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
       <h3 className="text-sm font-bold text-on-surface mb-3">{preset.name}</h3>
@@ -156,8 +164,8 @@ function BoardForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => v
   const [flex, setFlex] = useState('medium');
   const [shape, setShape] = useState('directional');
 
-  const handleSave = () => {
-    addBoardPreset({ id: generateId(), name: name || 'Unnamed', brand, model, lengthCm: length, flex, shape });
+  const handleSave = async () => {
+    await addBoardPreset({ id: generateId(), name: name || 'Unnamed', brand, model, lengthCm: length, flex, shape });
     onSave();
   };
 
@@ -195,10 +203,10 @@ function BoardForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => v
   );
 }
 
-function BoardCard({ preset }: { preset: BoardPreset; key?: React.Key }) {
+function BoardCard({ preset, onDelete }: { preset: BoardPreset; onDelete: () => void | Promise<void>; key?: React.Key }) {
   return (
     <div className="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10 relative group">
-      <button onClick={() => deleteBoardPreset(preset.id)} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
+      <button onClick={async () => { await deleteBoardPreset(preset.id); onDelete(); }} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
       <h3 className="text-sm font-bold text-on-surface mb-3">{preset.name}</h3>
@@ -226,8 +234,8 @@ function TrailForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => v
   const [drop, setDrop] = useState(4);
   const [snow, setSnow] = useState('packed');
 
-  const handleSave = () => {
-    addSnowTrailPreset({ id: generateId(), name: name || 'Unnamed Trail', difficulty, kickerType: kickerType as any, takeoffAngle: takeoff, landingAngle: landing, tableLength: 8, verticalDrop: drop, snowCondition: snow as any });
+  const handleSave = async () => {
+    await addSnowTrailPreset({ id: generateId(), name: name || 'Unnamed Trail', difficulty, kickerType: kickerType as any, takeoffAngle: takeoff, landingAngle: landing, tableLength: 8, verticalDrop: drop, snowCondition: snow as any });
     onSave();
   };
 
@@ -278,10 +286,10 @@ function TrailForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => v
   );
 }
 
-function TrailCard({ preset }: { preset: SnowTrailPreset; key?: React.Key }) {
+function TrailCard({ preset, onDelete }: { preset: SnowTrailPreset; onDelete: () => void | Promise<void>; key?: React.Key }) {
   return (
     <div className="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10 relative group">
-      <button onClick={() => deleteSnowTrailPreset(preset.id)} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
+      <button onClick={async () => { await deleteSnowTrailPreset(preset.id); onDelete(); }} className="absolute top-3 right-3 p-1.5 text-on-surface-variant hover:text-error hover:bg-error-container rounded-md transition-colors opacity-0 group-hover:opacity-100">
         <Trash2 className="w-3.5 h-3.5" />
       </button>
       <h3 className="text-sm font-bold text-on-surface mb-3">{preset.name}</h3>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
   TrendingUp,
@@ -19,8 +19,13 @@ import type { TrainingLog } from '@/types';
 
 export function Dashboard() {
   const { user } = useAuth();
-  const sessions = getTrainingLogs();
-  const savedMoves = getMoves();
+  const [sessions, setSessions] = useState<TrainingLog[]>([]);
+  const [savedMoves, setSavedMoves] = useState<Awaited<ReturnType<typeof getMoves>>>([]);
+
+  useEffect(() => {
+    getTrainingLogs().then(setSessions);
+    getMoves().then(setSavedMoves);
+  }, []);
 
   const stats = useMemo(() => {
     if (sessions.length === 0) return null;

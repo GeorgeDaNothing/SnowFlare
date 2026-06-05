@@ -15,7 +15,7 @@ export function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -29,16 +29,18 @@ export function Login() {
     }
 
     setIsSubmitting(true);
-    // Simulate network delay
-    setTimeout(() => {
-      const result = login(email, password, rememberMe);
+    try {
+      const result = await login(email, password, rememberMe);
       if (result.success) {
         navigate('/');
       } else {
         setError(result.message);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed.');
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Trash2, RotateCcw, Save, ChevronRight, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,17 +13,21 @@ function generateId() {
 }
 
 export function TechniqueLibrary() {
-  const [moves, setMoves] = useState(getMoves);
+  const [moves, setMoves] = useState<Awaited<ReturnType<typeof getMoves>>>([]);
   const [isCreating, setIsCreating] = useState(false);
 
-  const handleDelete = (id: string) => {
+  useEffect(() => {
+    getMoves().then(setMoves);
+  }, []);
+
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this move preset?')) {
-      deleteMove(id);
-      setMoves(getMoves());
+      await deleteMove(id);
+      setMoves(await getMoves());
     }
   };
 
-  const handleSave = (config: MoveConfig) => {
+  const handleSave = async (config: MoveConfig) => {
     const preset = {
       id: generateId(),
       name: config.name,
@@ -37,8 +41,8 @@ export function TechniqueLibrary() {
       },
       lastAnalysis: null,
     };
-    saveMove(preset);
-    setMoves(getMoves());
+    await saveMove(preset as any);
+    setMoves(await getMoves());
     setIsCreating(false);
   };
 

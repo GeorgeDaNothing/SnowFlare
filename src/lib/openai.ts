@@ -40,7 +40,7 @@ export async function analyzeMoveWithAI(
   const requestHash = hashRequest(request);
 
   // Check cache first
-  const cached = getCachedAnalysis(requestHash);
+  const cached = await getCachedAnalysis(requestHash);
   if (cached) {
     return { ...cached.response, source: 'hybrid' };
   }

@@ -15,7 +15,7 @@ export function ForgotPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -25,13 +25,13 @@ export function ForgotPassword() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const sqResult = getSecurityQuestions(email);
+    try {
+      const sqResult = await getSecurityQuestions(email);
       if (sqResult.success && sqResult.questions) {
         setQuestions(sqResult.questions);
         setStep('questions');
       } else {
-        const resetResult = requestPasswordReset(email);
+        const resetResult = await requestPasswordReset(email);
         if (resetResult.success) {
           setResetToken(resetResult.token || '');
           setStep('token');
@@ -39,11 +39,14 @@ export function ForgotPassword() {
           setError(resetResult.message);
         }
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Request failed.');
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
-  const handleAnswersSubmit = (e: React.FormEvent) => {
+  const handleAnswersSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -53,16 +56,19 @@ export function ForgotPassword() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const result = verifySecurityAnswers(email, answers);
+    try {
+      const result = await verifySecurityAnswers(email, answers);
       if (result.success) {
         setResetToken(result.token || '');
         setStep('token');
       } else {
         setError(result.message);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed.');
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   return (

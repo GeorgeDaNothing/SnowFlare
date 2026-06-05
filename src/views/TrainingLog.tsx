@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Calendar, Cloud, Trash2, ChevronRight, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, Star, Video, Wind, Thermometer, Snowflake } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -6,9 +6,17 @@ import { getTrainingLogs, saveTrainingLog, deleteTrainingLog } from '@/lib/stora
 import type { TrainingLog, TrainingLogMoveAttempt } from '@/types';
 
 export function TrainingLogView() {
-  const [logs, setLogs] = useState<TrainingLog[]>(getTrainingLogs);
+  const [logs, setLogs] = useState<TrainingLog[]>([]);
   const [filter, setFilter] = useState<'all' | 'landed' | 'crashed' | 'injured' | 'favorites'>('all');
   const [viewingLog, setViewingLog] = useState<TrainingLog | null>(null);
+
+  const loadLogs = async () => {
+    setLogs(await getTrainingLogs());
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
 
   const filteredLogs = useMemo(() => {
     if (filter === 'all') return logs;
@@ -21,25 +29,25 @@ export function TrainingLogView() {
     });
   }, [logs, filter]);
 
-  const toggleFavorite = (id: string, e: React.MouseEvent) => {
+  const toggleFavorite = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const log = logs.find((l) => l.id === id);
     if (!log) return;
     const updated = { ...log, isFavorite: !log.isFavorite };
-    saveTrainingLog(updated);
-    setLogs(getTrainingLogs());
+    await saveTrainingLog(updated);
+    await loadLogs();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Delete this training log?')) {
-      deleteTrainingLog(id);
-      setLogs(getTrainingLogs());
+      await deleteTrainingLog(id);
+      await loadLogs();
       if (viewingLog?.id === id) setViewingLog(null);
     }
   };
 
   if (viewingLog) {
-    return <LogDetail log={viewingLog} onBack={() => setViewingLog(null)} onDelete={() => handleDelete(viewingLog.id)} onUpdate={(l) => { saveTrainingLog(l); setLogs(getTrainingLogs()); }} />;
+    return <LogDetail log={viewingLog} onBack={() => setViewingLog(null)} onDelete={() => handleDelete(viewingLog.id)} onUpdate={async (l) => { await saveTrainingLog(l); await loadLogs(); }} />;
   }
 
   return (

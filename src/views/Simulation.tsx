@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Wind,
@@ -58,9 +58,13 @@ export function Simulation() {
   const [results, setResults] = useState<MoveAnalysisResponse | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [presets, setPresets] = useState<Awaited<ReturnType<typeof getPresets>>>({ personal: [], board: [], trails: [] });
+  const [savedMoves, setSavedMoves] = useState<Awaited<ReturnType<typeof getMoves>>>([]);
 
-  const presets = getPresets();
-  const savedMoves = getMoves();
+  useEffect(() => {
+    getPresets().then(setPresets);
+    getMoves().then(setSavedMoves);
+  }, []);
 
   const updateMove = (patch: Partial<MoveConfig>) => {
     setMoveConfig((prev) => {
@@ -78,7 +82,7 @@ export function Simulation() {
     setMoveConfig(preset.config.move);
   };
 
-  const runSimulation = useCallback(() => {
+  const runSimulation = useCallback(async () => {
     if (!selectedTrail || !selectedRider) return;
     setIsSimulating(true);
 
@@ -143,7 +147,7 @@ export function Simulation() {
         postNotes: '',
       }],
     };
-    saveTrainingLog(log);
+    await saveTrainingLog(log);
   }, [moveConfig, selectedTrail, selectedRider, selectedBoard, environment]);
 
   return (

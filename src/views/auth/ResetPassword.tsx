@@ -41,7 +41,7 @@ export function ResetPassword() {
   const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
   const strengthColors = ['bg-error', 'bg-error', 'bg-secondary', 'bg-tertiary', 'bg-primary', 'bg-primary'];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -63,8 +63,8 @@ export function ResetPassword() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const result = resetPassword(token, newPassword);
+    try {
+      const result = await resetPassword(token, newPassword);
       if (result.success) {
         setSuccess(true);
       } else {
@@ -73,8 +73,11 @@ export function ResetPassword() {
           setIsValidToken(false);
         }
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Reset failed.');
+    } finally {
       setIsSubmitting(false);
-    }, 600);
+    }
   };
 
   if (success) {
