@@ -6,7 +6,6 @@ import {
   BookOpen, 
   Settings,
   LogOut,
-  User,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +19,7 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant/10">
@@ -59,7 +58,12 @@ export function Sidebar() {
       {/* Bottom Actions */}
       <div className="px-6 py-5 border-t border-outline-variant/10 space-y-1">
         <Link to="/profile" className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all">
-          <User className="w-5 h-5" />
+          <img 
+            alt="Profile" 
+            className="w-5 h-5 rounded-full object-cover ring-1 ring-outline-variant/30" 
+            src={user?.avatar || 'https://ui-avatars.com/api/?name=User&background=ab3500&color=fff'}
+            referrerPolicy="no-referrer"
+          />
           Profile
         </Link>
         <button 
