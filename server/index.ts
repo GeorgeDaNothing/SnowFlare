@@ -2,6 +2,11 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth';
+import movesRoutes from './routes/moves';
+import logsRoutes from './routes/logs';
+import presetsRoutes from './routes/presets';
+import profileRoutes from './routes/profile';
+import cacheRoutes from './routes/cache';
 
 const app = express();
 const PORT = Number(process.env.SERVER_PORT) || 3001;
@@ -24,6 +29,11 @@ app.get('/api/health', (_req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/moves', movesRoutes);
+app.use('/api/logs', logsRoutes);
+app.use('/api/presets', presetsRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/cache', cacheRoutes);
 
 // 404 handler
 app.use((_req, res) => {
