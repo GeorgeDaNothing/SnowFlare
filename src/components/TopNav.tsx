@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, LogOut, User, ChevronDown } from 'lucide-react';
+import { LogOut, User, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -22,10 +22,6 @@ export function TopNav() {
   return (
     <nav className="bg-surface/80 backdrop-blur-md shadow-sm docked full-width top-0 sticky z-50 flex justify-end items-center w-full px-6 py-3 max-w-full border-b border-outline-variant/10">
       <div className="flex items-center gap-4">
-        <button className="p-2 text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-full">
-          <Bell className="w-5 h-5" />
-        </button>
-        
         <div className="relative" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
