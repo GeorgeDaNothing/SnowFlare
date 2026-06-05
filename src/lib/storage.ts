@@ -182,8 +182,12 @@ export function savePresets(presets: PresetsCollection): void {
 export function addPersonalPreset(preset: PersonalPreset): void {
   const presets = getPresets();
   const idx = presets.personal.findIndex((p) => p.id === preset.id);
-  if (idx >= 0) presets.personal[idx] = preset;
-  else presets.personal.push(preset);
+  if (idx >= 0) {
+    // Merge to preserve any legacy dominantFoot data during transition
+    presets.personal[idx] = { ...presets.personal[idx], ...preset };
+  } else {
+    presets.personal.push(preset);
+  }
   savePresets(presets);
 }
 

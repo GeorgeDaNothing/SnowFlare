@@ -122,7 +122,6 @@ export interface PersonalPreset {
   heightCm: number;
   experienceLevel: ExperienceLevel;
   stance: Stance;
-  dominantFoot: 'left' | 'right';
 }
 
 export interface BoardPreset {

@@ -11,7 +11,6 @@ import {
   ChevronRight,
   ChevronLeft,
   Play,
-  Save,
   RotateCw,
   CheckCircle2,
   AlertTriangle,
@@ -22,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { analyzeMoveFast } from '@/lib/openai';
-import { saveTrainingLog, getPresets, getMoves, saveMove } from '@/lib/storage';
+import { saveTrainingLog, getPresets, getMoves } from '@/lib/storage';
 import type { MoveAnalysisRequest, MoveAnalysisResponse, TrainingLog, MoveConfig } from '@/types';
 
 const WEATHER_OPTIONS = ['clear', 'cloudy', 'foggy', 'snowing', 'windy'] as const;
@@ -59,7 +58,6 @@ export function Simulation() {
   const [results, setResults] = useState<MoveAnalysisResponse | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [saveMoveMessage, setSaveMoveMessage] = useState('');
 
   const presets = getPresets();
   const savedMoves = getMoves();
@@ -147,50 +145,6 @@ export function Simulation() {
     };
     saveTrainingLog(log);
   }, [moveConfig, selectedTrail, selectedRider, selectedBoard, environment]);
-
-  const handleSaveMovePreset = () => {
-    const preset = {
-      id: generateId(),
-      name: moveConfig.name,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      config: {
-        move: moveConfig,
-        kicker: {
-          type: 'slopestyle' as const,
-          takeoffAngle: 25,
-          landingAngle: 30,
-          tableLength: 8,
-          verticalDrop: 4,
-          snowCondition: 'packed' as const,
-        },
-        rider: {
-          name: 'Default',
-          experienceLevel: 'intermediate',
-          yearsExperience: 2,
-          heightCm: 175,
-          weightKg: 70,
-          stance: 'regular',
-          dominantFoot: 'right',
-          preferredDiscipline: 'Freestyle',
-          recentInjuries: [],
-        },
-        context: {
-          attemptNumber: 1,
-          previousSuccessRate: 0.6,
-          weather: 'clear',
-          windDirection: 'tailwind',
-          visibility: 'good',
-          temperatureC: -5,
-          fatigueLevel: 3,
-        },
-      },
-      lastAnalysis: null,
-    };
-    saveMove(preset as any);
-    setSaveMoveMessage('Move saved to presets!');
-    setTimeout(() => setSaveMoveMessage(''), 2000);
-  };
 
   return (
     <div className="max-w-5xl mx-auto px-6 lg:px-12 py-8">
@@ -335,12 +289,7 @@ export function Simulation() {
                 )}
               </div>
 
-              <div className="flex gap-2 mt-4">
-                <button onClick={handleSaveMovePreset} className="px-4 py-2 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest transition-colors flex items-center gap-1.5">
-                  <Save className="w-3.5 h-3.5" /> Save Move Preset
-                </button>
-              </div>
-              {saveMoveMessage && <p className="text-xs text-primary mt-2">{saveMoveMessage}</p>}
+
             </div>
 
             <div className="flex justify-between">
@@ -485,7 +434,7 @@ export function Simulation() {
               <button onClick={() => { setStep(1); setResults(null); }} className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-lg hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-2">
                 <RotateCw className="w-4 h-4" /> New Simulation
               </button>
-              <a href="#/training-log" className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-center">
+              <a href="/training-log" className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-center">
                 View Training Log <ArrowRight className="w-4 h-4" />
               </a>
             </div>

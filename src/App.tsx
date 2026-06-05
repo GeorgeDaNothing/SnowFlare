@@ -9,6 +9,7 @@ import { MoveDesigner } from '@/views/MoveDesigner';
 import { VideoAnalysis } from '@/views/VideoAnalysis';
 import { AnalysisStudio } from '@/views/AnalysisStudio';
 import { TrainingLogView } from '@/views/TrainingLog';
+import { TechniqueLibrary } from '@/views/TechniqueLibrary';
 import { Presets } from '@/views/Presets';
 import { Login } from '@/views/auth/Login';
 import { Register } from '@/views/auth/Register';
@@ -47,6 +48,7 @@ function AppRoutes() {
       <Route path="/analysis" element={<ProtectedRoute><Layout><VideoAnalysis /></Layout></ProtectedRoute>} />
       <Route path="/designer" element={<ProtectedRoute><Layout><MoveDesigner /></Layout></ProtectedRoute>} />
       <Route path="/insights" element={<ProtectedRoute><Layout><AnalysisStudio /></Layout></ProtectedRoute>} />
+      <Route path="/library" element={<ProtectedRoute><Layout><TechniqueLibrary /></Layout></ProtectedRoute>} />
       <Route path="/training-log" element={<ProtectedRoute><Layout><TrainingLogView /></Layout></ProtectedRoute>} />
       <Route path="/presets" element={<ProtectedRoute><Layout><Presets /></Layout></ProtectedRoute>} />
 

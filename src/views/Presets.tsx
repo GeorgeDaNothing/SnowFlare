@@ -83,10 +83,9 @@ function PersonalForm({ onSave, onCancel }: { onSave: () => void; onCancel: () =
   const [height, setHeight] = useState(175);
   const [experience, setExperience] = useState('intermediate');
   const [stance, setStance] = useState('regular');
-  const [foot, setFoot] = useState('right');
 
   const handleSave = () => {
-    addPersonalPreset({ id: generateId(), name: name || 'Unnamed', weightKg: weight, heightCm: height, experienceLevel: experience as any, stance: stance as any, dominantFoot: foot as any });
+    addPersonalPreset({ id: generateId(), name: name || 'Unnamed', weightKg: weight, heightCm: height, experienceLevel: experience as any, stance: stance as any });
     onSave();
   };
 
@@ -119,11 +118,6 @@ function PersonalForm({ onSave, onCancel }: { onSave: () => void; onCancel: () =
             {['regular', 'goofy'].map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </Field>
-        <Field label="Dominant Foot">
-          <select value={foot} onChange={(e) => setFoot(e.target.value)} className="w-full px-3 py-2 rounded-lg bg-surface-container text-sm text-on-surface outline-none border border-outline-variant/20 focus:border-primary">
-            {['left', 'right'].map((f) => <option key={f} value={f}>{f}</option>)}
-          </select>
-        </Field>
       </div>
       <div className="flex gap-3 pt-2">
         <button onClick={onCancel} className="flex-1 py-2.5 bg-surface-container-high text-on-surface font-bold text-xs rounded-lg hover:bg-surface-container-highest">Cancel</button>
@@ -145,7 +139,6 @@ function PersonalCard({ preset }: { preset: PersonalPreset; key?: React.Key }) {
         <div className="flex justify-between"><span className="text-on-surface-variant/60">Height</span><span className="font-medium text-on-surface">{preset.heightCm} cm</span></div>
         <div className="flex justify-between"><span className="text-on-surface-variant/60">Experience</span><span className="font-medium text-on-surface capitalize">{preset.experienceLevel}</span></div>
         <div className="flex justify-between"><span className="text-on-surface-variant/60">Stance</span><span className="font-medium text-on-surface capitalize">{preset.stance}</span></div>
-        <div className="flex justify-between"><span className="text-on-surface-variant/60">Dominant Foot</span><span className="font-medium text-on-surface capitalize">{preset.dominantFoot}</span></div>
       </div>
     </div>
   );
