@@ -278,7 +278,7 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
 
   const card = (
     <div className={cn('bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden flex flex-col', className)}>
-      <div ref={containerRef} className={cn('relative w-full', expanded ? 'flex-1 min-h-0' : 'h-[45vh] min-h-[300px] max-h-[520px]')}>
+      <div ref={containerRef} className={cn('relative w-full', expanded ? 'flex-1 min-h-0' : 'aspect-[2.2/1] min-h-[220px] max-h-[480px]')}>
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
 
