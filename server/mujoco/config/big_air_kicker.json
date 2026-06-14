@@ -1,8 +1,8 @@
 {
   "start_pose": {
-    "x": -24,
-    "z": 15.04,
-    "pitch_degrees": 39.97
+    "x": -20.0,
+    "z": 15.0,
+    "pitch_degrees": 40.0
   },
   "profile": {
     "width": 2.5,
@@ -13,135 +13,33 @@
       "D": "landing_mid"
     },
     "segments": {
-      "inrun": [
-        "tower_top",
-        "inrun_end"
-      ],
-      "takeoff": [
-        "takeoff_start",
-        "takeoff_lip"
-      ],
-      "landing": [
-        "knuckle",
-        "landing_mid"
-      ]
+      "inrun": ["tower_top", "inrun_end"],
+      "takeoff": ["takeoff_start", "takeoff_lip"],
+      "landing": ["knuckle", "landing_mid"]
     },
     "points": [
-      {
-        "label": "tower_top",
-        "x": -24,
-        "z": 15
-      },
-      {
-        "label": "inrun_upper",
-        "x": -21,
-        "z": 12.5
-      },
-      {
-        "label": "inrun_mid",
-        "x": -18,
-        "z": 10
-      },
-      {
-        "label": "inrun_lower",
-        "x": -15,
-        "z": 7.5
-      },
-      {
-        "label": "inrun_end",
-        "x": -12,
-        "z": 5.25
-      },
-      {
-        "label": "transition_1",
-        "x": -10.5,
-        "z": 4.1
-      },
-      {
-        "label": "transition_2",
-        "x": -9,
-        "z": 3.3
-      },
-      {
-        "label": "transition_3",
-        "x": -7.5,
-        "z": 2.95
-      },
-      {
-        "label": "transition_4",
-        "x": -6,
-        "z": 2.85
-      },
-      {
-        "label": "deck_start",
-        "x": -4.5,
-        "z": 2.85
-      },
-      {
-        "label": "deck_mid",
-        "x": -3,
-        "z": 2.85
-      },
-      {
-        "label": "deck_end",
-        "x": -1.5,
-        "z": 2.9
-      },
-      {
-        "label": "takeoff_start",
-        "x": -0.75,
-        "z": 3
-      },
-      {
-        "label": "takeoff_mid",
-        "x": 0,
-        "z": 3.28
-      },
-      {
-        "label": "takeoff_lip",
-        "x": 1,
-        "z": 3.5
-      },
-      {
-        "label": "cliff_top",
-        "x": 1,
-        "z": 3.5
-      },
-      {
-        "label": "cliff_bottom",
-        "x": 1,
-        "z": 1.7
-      },
-      {
-        "label": "knuckle",
-        "x": 6.7,
-        "z": 2.6
-      },
-      {
-        "label": "landing_upper",
-        "x": 8.5,
-        "z": 0.4
-      },
-      {
-        "label": "landing_mid",
-        "x": 11.1,
-        "z": -1.05
-      },
-      {
-        "label": "landing_lower",
-        "x": 13.4,
-        "z": -2.05
-      },
-      {
-        "label": "landing_end",
-        "x": 15.35,
-        "z": -2.5
-      },
-      {
-        "label": "runout",
-        "x": 16.65,
-        "z": -2.7
-      }
+      {"label": "tower_top", "x": -20.0, "z": 15.0},
+      {"label": "inrun_upper", "x": -16.0, "z": 10.5},
+      {"label": "inrun_mid", "x": -12.0, "z": 7.0},
+      {"label": "inrun_lower", "x": -8.0, "z": 4.5},
+      {"label": "inrun_end", "x": -5.0, "z": 3.2},
+      {"label": "transition_1", "x": -4.0, "z": 3.1},
+      {"label": "transition_2", "x": -3.0, "z": 3.1},
+      {"label": "transition_3", "x": -2.0, "z": 3.15},
+      {"label": "deck_start", "x": -4.0, "z": 3.1},
+      {"label": "deck_mid", "x": -2.5, "z": 3.1},
+      {"label": "deck_end", "x": -1.5, "z": 3.15},
+      {"label": "takeoff_start", "x": -0.8, "z": 3.25},
+      {"label": "takeoff_mid", "x": -0.3, "z": 3.55},
+      {"label": "takeoff_lip", "x": 0.0, "z": 3.8},
+      {"label": "cliff_top", "x": 0.0, "z": 3.8},
+      {"label": "cliff_bottom", "x": 0.0, "z": 1.5},
+      {"label": "knuckle", "x": 10.0, "z": 3.5},
+      {"label": "landing_upper", "x": 13.0, "z": 0.0},
+      {"label": "landing_mid", "x": 16.0, "z": -2.5},
+      {"label": "landing_lower", "x": 19.0, "z": -4.0},
+      {"label": "landing_end", "x": 22.0, "z": -4.8},
+      {"label": "runout", "x": 24.0, "z": -5.0}
     ]
   }
 }
