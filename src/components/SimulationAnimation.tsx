@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReplayData } from '@/types';
 
@@ -14,6 +14,7 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
   const [playing, setPlaying] = useState(true);
   const [replayTime, setReplayTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [expanded, setExpanded] = useState(false);
   const rafRef = useRef<number | null>(null);
   const lastTsRef = useRef<number>(0);
 
@@ -45,7 +46,7 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
 
   const project = useCallback(
     (canvas: HTMLCanvasElement, minX: number, maxX: number, minZ: number, maxZ: number) => {
-      const padding = { left: 48, right: 48, top: 32, bottom: 56 };
+      const padding = { left: 28, right: 28, top: 32, bottom: 56 };
       const xRange = maxX - minX || 1;
       const zRange = maxZ - minZ || 1;
 
@@ -252,19 +253,28 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
 
   const togglePlay = () => setPlaying((p) => !p);
 
+  const toggleExpand = () => {
+    setExpanded((prev) => {
+      const next = !prev;
+      // Redraw after the layout change so the canvas resizes correctly.
+      requestAnimationFrame(() => draw(replayTime));
+      return next;
+    });
+  };
+
   const reset = () => {
     setReplayTime(0);
     draw(0);
     setPlaying(true);
   };
 
-  return (
-    <div className={cn('bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden', className)}>
-      <div ref={containerRef} className="relative w-full h-72 md:h-80 lg:h-96">
+  const card = (
+    <div className={cn('bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden flex flex-col', className)}>
+      <div ref={containerRef} className={cn('relative w-full', expanded ? 'flex-1 min-h-0' : 'h-72 md:h-80 lg:h-96')}>
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
 
-      <div className="flex items-center gap-3 px-4 py-3 bg-surface-container-high border-t border-outline-variant/10">
+      <div className="flex items-center gap-3 px-4 py-3 bg-surface-container-high border-t border-outline-variant/10 shrink-0">
         <button
           onClick={togglePlay}
           className="p-2 rounded-lg bg-primary text-on-primary hover:bg-primary/90 transition-colors"
@@ -278,6 +288,14 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
           aria-label="Replay"
         >
           <RotateCcw className="w-4 h-4" />
+        </button>
+        <button
+          onClick={toggleExpand}
+          className="p-2 rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-highest transition-colors"
+          aria-label={expanded ? 'Collapse' : 'Expand'}
+          title={expanded ? 'Collapse' : 'Expand'}
+        >
+          {expanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
         <input
           type="range"
@@ -293,4 +311,16 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
       </div>
     </div>
   );
+
+  if (expanded) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 md:p-8">
+        <div className="w-full h-full max-w-7xl flex flex-col">
+          <div className="flex-1 min-h-0">{card}</div>
+        </div>
+      </div>
+    );
+  }
+
+  return card;
 }

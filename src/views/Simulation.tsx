@@ -456,10 +456,11 @@ export function Simulation() {
 
             {/* Physics Animation */}
             <div className="space-y-3 mb-8">
-              <h3 className="text-sm font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+              <h3 className="text-sm font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-2 px-6 lg:px-12">
                 <Play className="w-4 h-4" /> Jump Replay
               </h3>
-              {isRunningPhysics && (
+              <div className="w-screen relative px-4 md:px-8 lg:px-12" style={{ marginLeft: 'calc(50% - 50vw)' }}>
+                {isRunningPhysics && (
                 <div className="flex items-center gap-3 p-4 bg-surface-container-high rounded-xl border border-outline-variant/10 text-sm text-on-surface-variant">
                   <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
                   Running MuJoCo physics engine…
@@ -478,6 +479,7 @@ export function Simulation() {
                   Replay will appear here once the physics engine finishes.
                 </div>
               )}
+              </div>
             </div>
 
             {/* Actions */}
