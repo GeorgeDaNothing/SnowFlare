@@ -20,16 +20,16 @@ function estimateLaunchSpeedMs(request: MoveAnalysisRequest): number {
   // appropriate takeoff speed for the kicker profile.
   switch (request.kicker.type) {
     case 'big-air':
-      return 3.0;
-    case 'slopestyle':
-      return 2.5;
-    case 'halfpipe':
-      return 2.0;
-    case 'rail':
       return 1.5;
+    case 'slopestyle':
+      return 1.3;
+    case 'halfpipe':
+      return 1.1;
+    case 'rail':
+      return 0.8;
     case 'kicker':
     default:
-      return 2.2;
+      return 1.2;
   }
 }
 
@@ -42,7 +42,7 @@ function mapRequestToConfig(request: MoveAnalysisRequest): SimulatorConfig {
 
   return makeSimulatorConfig({
     timestep: 0.002,
-    duration: 6.0,
+    duration: 4.0,
     riderMass: request.rider.weightKg || 72,
     boardLength: clamp(boardLength, 1.0, 2.0),
     boardWidth: clamp(boardWidth, 0.2, 0.4),
