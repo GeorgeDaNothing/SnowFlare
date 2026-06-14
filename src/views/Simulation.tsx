@@ -455,7 +455,7 @@ export function Simulation() {
             )}
 
             {/* Physics Animation */}
-            <div className="space-y-3">
+            <div className="space-y-3 mb-8">
               <h3 className="text-sm font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
                 <Play className="w-4 h-4" /> Jump Replay
               </h3>
