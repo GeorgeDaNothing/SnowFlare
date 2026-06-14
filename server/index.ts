@@ -7,6 +7,7 @@ import logsRoutes from './routes/logs';
 import presetsRoutes from './routes/presets';
 import profileRoutes from './routes/profile';
 import cacheRoutes from './routes/cache';
+import simulationRoutes from './routes/simulation';
 
 const app = express();
 const PORT = Number(process.env.SERVER_PORT) || 3001;
@@ -34,6 +35,7 @@ app.use('/api/logs', logsRoutes);
 app.use('/api/presets', presetsRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/cache', cacheRoutes);
+app.use('/api/simulation', simulationRoutes);
 
 // 404 handler
 app.use((_req, res) => {

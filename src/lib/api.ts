@@ -319,3 +319,16 @@ export const apiCache = {
     });
   },
 };
+
+// ============================================
+// MuJoCo Simulation
+// ============================================
+
+export const apiSimulation = {
+  run(request: unknown) {
+    return apiFetch<{ success: boolean; replay?: import('@/types').ReplayData; message?: string }>('/simulation/run', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+};

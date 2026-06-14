@@ -244,3 +244,44 @@ export interface SessionTrendAnalysisResponse {
   riskTrend: 'improving' | 'stable' | 'worsening';
   dangerFactorsOverTime: DangerFactorTrend[];
 }
+
+// ============================================
+// MuJoCo Simulation Replay Types
+// ============================================
+
+export interface ReplayFrame {
+  time: number;
+  phase: string;
+  body_control: { compression: number; forward_lean: number };
+  position: [number, number, number];
+  quaternion: [number, number, number, number]; // x, y, z, w (Three.js order)
+  velocity: [number, number, number];
+  angular_velocity: [number, number, number];
+}
+
+export interface ReplayMetadata {
+  schema_version: number;
+  duration: number;
+  simulation_timestep: number;
+  frame_stride: number;
+  coordinate_system: string;
+}
+
+export interface ReplayConfigPoint {
+  label: string;
+  position: [number, number, number];
+}
+
+export interface ReplayData {
+  metadata: ReplayMetadata;
+  config_points: ReplayConfigPoint[];
+  profile_vertices: Array<[number, number, number]>;
+  profile_faces: Array<[number, number, number]>;
+  frames: ReplayFrame[];
+}
+
+export interface SimulationRunResponse {
+  success: boolean;
+  replay?: ReplayData;
+  message?: string;
+}

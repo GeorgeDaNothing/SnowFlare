@@ -22,7 +22,9 @@ import {
 import { cn } from '@/lib/utils';
 import { analyzeMoveFast } from '@/lib/openai';
 import { saveTrainingLog, getPresets, getMoves } from '@/lib/storage';
-import type { MoveAnalysisRequest, MoveAnalysisResponse, TrainingLog, MoveConfig } from '@/types';
+import { apiSimulation } from '@/lib/api';
+import { SimulationAnimation } from '@/components/SimulationAnimation';
+import type { MoveAnalysisRequest, MoveAnalysisResponse, TrainingLog, MoveConfig, ReplayData } from '@/types';
 
 const WEATHER_OPTIONS = ['clear', 'cloudy', 'foggy', 'snowing', 'windy'] as const;
 const SNOW_QUALITY_OPTIONS = ['powder', 'packed', 'icy', 'slush', 'corduroy'] as const;
@@ -57,6 +59,9 @@ export function Simulation() {
   const [selectedBoard, setSelectedBoard] = useState<any>(null);
   const [results, setResults] = useState<MoveAnalysisResponse | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isRunningPhysics, setIsRunningPhysics] = useState(false);
+  const [replayData, setReplayData] = useState<ReplayData | null>(null);
+  const [replayError, setReplayError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [presets, setPresets] = useState<Awaited<ReturnType<typeof getPresets>>>({ personal: [], board: [], trails: [] });
   const [savedMoves, setSavedMoves] = useState<Awaited<ReturnType<typeof getMoves>>>([]);
@@ -122,6 +127,22 @@ export function Simulation() {
     setResults(res);
     setIsSimulating(false);
     setStep(4);
+
+    // Run MuJoCo physics replay in the background
+    setIsRunningPhysics(true);
+    setReplayError(null);
+    try {
+      const simRes = await apiSimulation.run({ ...request, board: selectedBoard });
+      if (simRes.success && simRes.replay) {
+        setReplayData(simRes.replay);
+      } else {
+        setReplayError(simRes.message || 'Could not generate replay.');
+      }
+    } catch (err: any) {
+      setReplayError(err?.message || 'Physics engine failed.');
+    } finally {
+      setIsRunningPhysics(false);
+    }
 
     // Auto-save to training log
     const log: TrainingLog = {
@@ -433,9 +454,35 @@ export function Simulation() {
               </div>
             )}
 
+            {/* Physics Animation */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+                <Play className="w-4 h-4" /> Jump Replay
+              </h3>
+              {isRunningPhysics && (
+                <div className="flex items-center gap-3 p-4 bg-surface-container-high rounded-xl border border-outline-variant/10 text-sm text-on-surface-variant">
+                  <span className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  Running MuJoCo physics engine…
+                </div>
+              )}
+              {replayError && !isRunningPhysics && (
+                <div className="p-4 bg-error-container rounded-xl border border-error/20 text-sm text-error">
+                  {replayError}
+                </div>
+              )}
+              {replayData && !isRunningPhysics && (
+                <SimulationAnimation replay={replayData} />
+              )}
+              {!isRunningPhysics && !replayError && !replayData && (
+                <div className="p-4 bg-surface-container-high rounded-xl border border-outline-variant/10 text-sm text-on-surface-variant">
+                  Replay will appear here once the physics engine finishes.
+                </div>
+              )}
+            </div>
+
             {/* Actions */}
             <div className="flex gap-3">
-              <button onClick={() => { setStep(1); setResults(null); }} className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-lg hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-2">
+              <button onClick={() => { setStep(1); setResults(null); setReplayData(null); setReplayError(null); }} className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-lg hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-2">
                 <RotateCw className="w-4 h-4" /> New Simulation
               </button>
               <a href="/training-log" className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-center">
