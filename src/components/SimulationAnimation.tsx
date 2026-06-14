@@ -260,7 +260,7 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
 
   return (
     <div className={cn('bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden', className)}>
-      <div ref={containerRef} className="relative w-full h-[420px] md:h-[520px]">
+      <div ref={containerRef} className="relative w-full h-72 md:h-80 lg:h-96">
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
 
