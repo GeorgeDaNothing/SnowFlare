@@ -155,25 +155,46 @@ export async function* runMigration(): AsyncGenerator<MigrationProgress, void, u
     const fullUser = users.find((u) => u.email.toLowerCase() === currentUser.email.toLowerCase());
 
     if (fullUser) {
-      // Try register first
-      let res = await apiAuth.register(
-        fullUser.name,
-        fullUser.email,
-        fullUser.password,
-        fullUser.securityQuestions
-      );
+      let token: string | undefined;
+      let errorMessage = '';
 
-      // If email exists, try login
-      if (!res.success && res.message.includes('already exists')) {
-        res = await apiAuth.login(fullUser.email, fullUser.password);
+      try {
+        // Try register first
+        const res = await apiAuth.register(
+          fullUser.name,
+          fullUser.email,
+          fullUser.password,
+          fullUser.securityQuestions
+        );
+        if (res.success && res.token) {
+          token = res.token;
+        } else if (res.message) {
+          errorMessage = res.message;
+        }
+      } catch (err: any) {
+        // Registration failed (e.g. email already exists). Try logging in next.
+        errorMessage = err?.message || 'Registration failed';
       }
 
-      if (res.success && res.token) {
-        setToken(res.token);
+      if (!token && errorMessage.toLowerCase().includes('already exists')) {
+        try {
+          const res = await apiAuth.login(fullUser.email, fullUser.password);
+          if (res.success && res.token) {
+            token = res.token;
+          } else if (res.message) {
+            errorMessage = res.message;
+          }
+        } catch (err: any) {
+          errorMessage = err?.message || 'Login failed';
+        }
+      }
+
+      if (token) {
+        setToken(token);
       } else {
         yield {
           phase: 'error',
-          message: `Could not migrate account: ${res.message}. Please register manually.`,
+          message: `Could not migrate account: ${errorMessage || 'Unknown error'}. Please register manually.`,
           total: 0,
           current: 0,
         };

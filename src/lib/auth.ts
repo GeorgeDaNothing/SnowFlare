@@ -1,4 +1,4 @@
-import { apiAuth, setToken, clearToken } from './api';
+import { apiAuth, setToken, clearToken, getToken } from './api';
 
 export interface User {
   id: string;
@@ -66,6 +66,7 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<User | null> {
+    if (!getToken()) return null;
     try {
       const res = await apiAuth.me();
       if (res.success && res.user) {
