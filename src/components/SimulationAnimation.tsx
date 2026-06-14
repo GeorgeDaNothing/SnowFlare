@@ -49,12 +49,20 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
       const padding = { left: 28, right: 28, top: 32, bottom: 56 };
       const xRange = maxX - minX || 1;
       const zRange = maxZ - minZ || 1;
+      const drawWidth = canvas.width - padding.left - padding.right;
+      const drawHeight = canvas.height - padding.top - padding.bottom;
+      const xScale = drawWidth / xRange;
+      const zScale = drawHeight / zRange;
+      // Preserve 1:1 aspect ratio (1 meter x = 1 meter z in pixels).
+      const scale = Math.min(xScale, zScale);
+      const usedWidth = scale * xRange;
+      const usedHeight = scale * zRange;
+      const offsetX = padding.left + (drawWidth - usedWidth) / 2;
+      const offsetZ = padding.top + (drawHeight - usedHeight) / 2;
 
       return {
-        sx: (x: number) =>
-          padding.left + ((x - minX) / xRange) * (canvas.width - padding.left - padding.right),
-        sz: (z: number) =>
-          canvas.height - padding.bottom - ((z - minZ) / zRange) * (canvas.height - padding.top - padding.bottom),
+        sx: (x: number) => offsetX + (x - minX) * scale,
+        sz: (z: number) => canvas.height - offsetZ - (z - minZ) * scale,
         padding,
       };
     },
@@ -270,7 +278,7 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
 
   const card = (
     <div className={cn('bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden flex flex-col', className)}>
-      <div ref={containerRef} className={cn('relative w-full', expanded ? 'flex-1 min-h-0' : 'h-72 md:h-80 lg:h-96')}>
+      <div ref={containerRef} className={cn('relative w-full', expanded ? 'flex-1 min-h-0' : 'h-[45vh] min-h-[300px] max-h-[520px]')}>
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
 
