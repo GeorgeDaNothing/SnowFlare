@@ -1,22 +1,30 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Calendar, Cloud, Trash2, ChevronRight, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, Star, Video, Wind, Thermometer, Snowflake } from 'lucide-react';
+import { Calendar, Cloud, Trash2, ChevronRight, CheckCircle2, XCircle, AlertTriangle, ArrowLeft, Star, Video, Wind, Thermometer, Snowflake, Activity, Play, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getTrainingLogs, saveTrainingLog, deleteTrainingLog } from '@/lib/storage';
+import { SimulationAnimation } from '@/components/SimulationAnimation';
 import type { TrainingLog, TrainingLogMoveAttempt } from '@/types';
 
 export function TrainingLogView() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedLogId = searchParams.get('log');
   const [logs, setLogs] = useState<TrainingLog[]>([]);
   const [filter, setFilter] = useState<'all' | 'landed' | 'crashed' | 'injured' | 'favorites'>('all');
   const [viewingLog, setViewingLog] = useState<TrainingLog | null>(null);
 
   const loadLogs = async () => {
-    setLogs(await getTrainingLogs());
+    const loadedLogs = await getTrainingLogs();
+    setLogs(loadedLogs);
+    if (requestedLogId) {
+      setViewingLog(loadedLogs.find((log) => log.id === requestedLogId) ?? null);
+    }
   };
 
   useEffect(() => {
     loadLogs();
-  }, []);
+  }, [requestedLogId]);
 
   const filteredLogs = useMemo(() => {
     if (filter === 'all') return logs;
@@ -47,7 +55,7 @@ export function TrainingLogView() {
   };
 
   if (viewingLog) {
-    return <LogDetail log={viewingLog} onBack={() => setViewingLog(null)} onDelete={() => handleDelete(viewingLog.id)} onUpdate={async (l) => { await saveTrainingLog(l); await loadLogs(); }} />;
+    return <LogDetail log={viewingLog} onBack={() => { setViewingLog(null); setSearchParams({}, { replace: true }); }} onDelete={() => handleDelete(viewingLog.id)} onUpdate={async (l) => { await saveTrainingLog(l); await loadLogs(); }} />;
   }
 
   return (
@@ -147,6 +155,8 @@ function LogCard({ log, onClick, onDelete, onToggleFavorite }: { log: TrainingLo
 // ============================================
 
 function LogDetail({ log, onBack, onDelete, onUpdate }: { log: TrainingLog; onBack: () => void; onDelete: () => void; onUpdate: (l: TrainingLog) => void }) {
+  const simulationResults = log.moves.filter((move) => move.analysis);
+
   const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -216,6 +226,96 @@ function LogDetail({ log, onBack, onDelete, onUpdate }: { log: TrainingLog; onBa
           <MoveAttemptRow key={i} attempt={move} index={i + 1} />
         ))}
       </div>
+
+      {simulationResults.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-sm font-black uppercase tracking-widest text-on-surface-variant mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4" /> Simulation Results
+          </h2>
+          <div className="space-y-6">
+            {simulationResults.map((move) => (
+              <SimulationResultReview key={move.moveId} attempt={move} />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+function SimulationResultReview({ attempt }: { attempt: TrainingLogMoveAttempt; key?: React.Key }) {
+  const analysis = attempt.analysis;
+  if (!analysis) return null;
+
+  const isHighRisk = analysis.dangerLevel === 'high' || analysis.dangerLevel === 'extreme';
+
+  return (
+    <div className="space-y-4">
+      <div className={cn('p-6 rounded-xl border flex items-center justify-between', isHighRisk ? 'bg-error-container border-error/20' : 'bg-green-50 border-green-200')}>
+        <div>
+          <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
+            {isHighRisk ? <AlertTriangle className="w-5 h-5 text-error" /> : <ShieldCheck className="w-5 h-5 text-green-600" />}
+            {attempt.moveName}
+          </h3>
+          <p className="text-sm text-on-surface-variant mt-1 capitalize">{analysis.dangerLevel} danger · {analysis.landingConfidence}% landing confidence</p>
+        </div>
+        <div className="text-right">
+          <p className="text-3xl font-black text-on-surface">{analysis.overallRiskScore}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-on-surface-variant">Risk Score</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <ResultMetric label="Air Time" value={`${analysis.physics.estimatedAirTimeSec}s`} />
+        <ResultMetric label="Max Height" value={`${analysis.physics.estimatedMaxHeightM}m`} />
+        <ResultMetric label="Impact" value={`${analysis.physics.estimatedImpactForceG}G`} warn={analysis.physics.estimatedImpactForceG > 5} />
+        <ResultMetric label="Landing Speed" value={`${analysis.physics.estimatedLandingVelocityMs}m/s`} />
+      </div>
+
+      {analysis.riskFactors.length > 0 && (
+        <div className="bg-surface-container-low rounded-xl p-5 border border-outline-variant/10 space-y-3">
+          <h3 className="text-sm font-black uppercase tracking-widest text-on-surface-variant">Risk Factors</h3>
+          {analysis.riskFactors.map((factor, index) => (
+            <div key={`${factor.category}-${index}`} className={cn('p-3 rounded-lg border text-xs', factor.severity === 'critical' ? 'bg-error-container border-error/20' : factor.severity === 'warning' ? 'bg-orange-50 border-orange-200' : 'bg-surface-container-high border-outline-variant/10')}>
+              <div className="flex items-center gap-2 mb-1">
+                {factor.severity === 'critical' ? <AlertTriangle className="w-3.5 h-3.5 text-error" /> : <Activity className="w-3.5 h-3.5 text-on-surface-variant" />}
+                <span className={cn('font-bold', factor.severity === 'critical' ? 'text-error' : 'text-on-surface')}>{factor.title}</span>
+              </div>
+              <p className="text-on-surface-variant mb-1">{factor.description}</p>
+              <p className="text-primary font-medium">{factor.recommendation}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {analysis.coachInsight && (
+        <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
+          <h3 className="text-xs font-black uppercase tracking-widest text-primary mb-2">Coach Insight</h3>
+          <p className="text-sm text-on-surface leading-relaxed">{analysis.coachInsight}</p>
+        </div>
+      )}
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-black uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+          <Play className="w-4 h-4" /> Jump Replay
+        </h3>
+        {attempt.replay ? (
+          <SimulationAnimation replay={attempt.replay} />
+        ) : (
+          <div className={cn('p-4 rounded-xl border text-sm', attempt.replayError ? 'bg-error-container border-error/20 text-error' : 'bg-surface-container-high border-outline-variant/10 text-on-surface-variant')}>
+            {attempt.replayError || 'Replay was not saved for this simulation.'}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ResultMetric({ label, value, warn = false }: { label: string; value: string; warn?: boolean }) {
+  return (
+    <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/10 text-center">
+      <p className={cn('text-xl font-black', warn ? 'text-error' : 'text-on-surface')}>{value}</p>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mt-1">{label}</p>
     </div>
   );
 }

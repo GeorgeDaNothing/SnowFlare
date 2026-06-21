@@ -161,6 +161,9 @@ export interface TrainingLogMoveAttempt {
   moveName: string;
   config: MoveAnalysisRequest;
   preAnalysisRiskScore: number;
+  analysis?: MoveAnalysisResponse;
+  replay?: ReplayData;
+  replayError?: string;
   landed: boolean;
   injuryOccurred: boolean;
   injuryType: string | null;

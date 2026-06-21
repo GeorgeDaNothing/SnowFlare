@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Wind,
@@ -63,6 +64,8 @@ export function Simulation() {
   const [replayData, setReplayData] = useState<ReplayData | null>(null);
   const [replayError, setReplayError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [savedLogId, setSavedLogId] = useState<string | null>(null);
+  const [logSaveError, setLogSaveError] = useState<string | null>(null);
   const [presets, setPresets] = useState<Awaited<ReturnType<typeof getPresets>>>({ personal: [], board: [], trails: [] });
   const [savedMoves, setSavedMoves] = useState<Awaited<ReturnType<typeof getMoves>>>([]);
 
@@ -90,6 +93,9 @@ export function Simulation() {
   const runSimulation = useCallback(async () => {
     if (!selectedTrail || !selectedRider) return;
     setIsSimulating(true);
+    setSaved(false);
+    setSavedLogId(null);
+    setLogSaveError(null);
 
     const request: MoveAnalysisRequest = {
       move: moveConfig,
@@ -131,15 +137,20 @@ export function Simulation() {
     // Run MuJoCo physics replay in the background
     setIsRunningPhysics(true);
     setReplayError(null);
+    let savedReplay: ReplayData | undefined;
+    let savedReplayError: string | undefined;
     try {
       const simRes = await apiSimulation.run({ ...request, board: selectedBoard });
       if (simRes.success && simRes.replay) {
+        savedReplay = simRes.replay;
         setReplayData(simRes.replay);
       } else {
-        setReplayError(simRes.message || 'Could not generate replay.');
+        savedReplayError = simRes.message || 'Could not generate replay.';
+        setReplayError(savedReplayError);
       }
     } catch (err: any) {
-      setReplayError(err?.message || 'Physics engine failed.');
+      savedReplayError = err?.message || 'Physics engine failed.';
+      setReplayError(savedReplayError);
     } finally {
       setIsRunningPhysics(false);
     }
@@ -161,6 +172,9 @@ export function Simulation() {
         moveName: moveConfig.name,
         config: request,
         preAnalysisRiskScore: res.overallRiskScore,
+        analysis: res,
+        replay: savedReplay,
+        replayError: savedReplayError,
         landed: true,
         injuryOccurred: false,
         injuryType: null,
@@ -168,7 +182,13 @@ export function Simulation() {
         postNotes: '',
       }],
     };
-    await saveTrainingLog(log);
+    try {
+      await saveTrainingLog(log);
+      setSaved(true);
+      setSavedLogId(log.id);
+    } catch (err: any) {
+      setLogSaveError(err?.message || 'Could not save this result to Training Log.');
+    }
   }, [moveConfig, selectedTrail, selectedRider, selectedBoard, environment]);
 
   return (
@@ -335,7 +355,7 @@ export function Simulation() {
             <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
               <h2 className="text-lg font-bold text-on-surface flex items-center gap-2 mb-4"><Mountain className="w-5 h-5 text-primary" /> Snow Trail</h2>
               {presets.trails.length === 0 ? (
-                <p className="text-sm text-on-surface-variant">No trails saved. <a href="#/presets" className="text-primary font-bold hover:underline">Create one in Presets</a>.</p>
+                <p className="text-sm text-on-surface-variant">No trails saved. <Link to="/presets?create=trails" className="text-primary font-bold hover:underline">Create one in Presets</Link>.</p>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {presets.trails.map((trail: any) => (
@@ -353,7 +373,7 @@ export function Simulation() {
             <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
               <h2 className="text-lg font-bold text-on-surface flex items-center gap-2 mb-4"><User className="w-5 h-5 text-primary" /> Rider</h2>
               {presets.personal.length === 0 ? (
-                <p className="text-sm text-on-surface-variant">No rider profiles saved. <a href="#/presets" className="text-primary font-bold hover:underline">Create one in Presets</a>.</p>
+                <p className="text-sm text-on-surface-variant">No rider profiles saved. <Link to="/presets?create=personal" className="text-primary font-bold hover:underline">Create one in Presets</Link>.</p>
               ) : (
                 <div className="flex flex-wrap gap-3">
                   {presets.personal.map((p: any) => (
@@ -369,7 +389,7 @@ export function Simulation() {
             <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
               <h2 className="text-lg font-bold text-on-surface flex items-center gap-2 mb-4"><Layers className="w-5 h-5 text-primary" /> Board</h2>
               {presets.board.length === 0 ? (
-                <p className="text-sm text-on-surface-variant">No boards saved. <a href="#/presets" className="text-primary font-bold hover:underline">Create one in Presets</a>.</p>
+                <p className="text-sm text-on-surface-variant">No boards saved. <Link to="/presets?create=board" className="text-primary font-bold hover:underline">Create one in Presets</Link>.</p>
               ) : (
                 <div className="flex flex-wrap gap-3">
                   {presets.board.map((b: any) => (
@@ -414,7 +434,9 @@ export function Simulation() {
                   {results.dangerLevel === 'extreme' || results.dangerLevel === 'high' ? <AlertTriangle className="w-5 h-5 text-error" /> : <ShieldCheck className="w-5 h-5 text-green-600" />}
                   Simulation Complete
                 </h2>
-                <p className="text-sm text-on-surface-variant mt-1">Move: {moveConfig.name} • Auto-saved to Training Log</p>
+                <p className="text-sm text-on-surface-variant mt-1">
+                  Move: {moveConfig.name} • {saved ? 'Saved to Training Log' : logSaveError ? 'Training Log save failed' : 'Saving to Training Log…'}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-3xl font-black text-on-surface">{results.overallRiskScore}</p>
@@ -482,12 +504,18 @@ export function Simulation() {
 
             {/* Actions */}
             <div className="flex gap-3">
-              <button onClick={() => { setStep(1); setResults(null); setReplayData(null); setReplayError(null); }} className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-lg hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-2">
+              <button onClick={() => { setStep(1); setResults(null); setReplayData(null); setReplayError(null); setSaved(false); setSavedLogId(null); setLogSaveError(null); }} className="flex-1 py-3 bg-surface-container-high text-on-surface font-bold rounded-lg hover:bg-surface-container-highest transition-colors flex items-center justify-center gap-2">
                 <RotateCw className="w-4 h-4" /> New Simulation
               </button>
-              <a href="/training-log" className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-center">
-                View Training Log <ArrowRight className="w-4 h-4" />
-              </a>
+              {saved && savedLogId ? (
+                <Link to={`/training-log?log=${encodeURIComponent(savedLogId)}`} className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 text-center">
+                  Review in Training Log <ArrowRight className="w-4 h-4" />
+                </Link>
+              ) : (
+                <button disabled className="flex-1 py-3 bg-primary text-on-primary font-bold rounded-lg flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
+                  {logSaveError ? 'Training Log Unavailable' : 'Saving Result…'}
+                </button>
+              )}
             </div>
           </motion.div>
         )}
