@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Maximize2, Minimize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { createSimulationProjection } from '@/lib/simulationProjection';
 import type { ReplayData } from '@/types';
 
 interface SimulationAnimationProps {
@@ -44,31 +45,6 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
     [frames]
   );
 
-  const project = useCallback(
-    (canvas: HTMLCanvasElement, minX: number, maxX: number, minZ: number, maxZ: number) => {
-      const padding = { left: 28, right: 28, top: 32, bottom: 56 };
-      const xRange = maxX - minX || 1;
-      const zRange = maxZ - minZ || 1;
-      const drawWidth = canvas.width - padding.left - padding.right;
-      const drawHeight = canvas.height - padding.top - padding.bottom;
-      const xScale = drawWidth / xRange;
-      const zScale = drawHeight / zRange;
-      // Preserve 1:1 aspect ratio (1 meter x = 1 meter z in pixels).
-      const scale = Math.min(xScale, zScale);
-      const usedWidth = scale * xRange;
-      const usedHeight = scale * zRange;
-      const offsetX = padding.left + (drawWidth - usedWidth) / 2;
-      const offsetZ = padding.top + (drawHeight - usedHeight) / 2;
-
-      return {
-        sx: (x: number) => offsetX + (x - minX) * scale,
-        sz: (z: number) => canvas.height - offsetZ - (z - minZ) * scale,
-        padding,
-      };
-    },
-    []
-  );
-
   const draw = useCallback(
     (time: number) => {
       const canvas = canvasRef.current;
@@ -96,7 +72,9 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
       const maxX = Math.max(...xs, ...fxs);
       const minZ = Math.min(...zs, ...fzs) - 1;
       const maxZ = Math.max(...zs, ...fzs) + 4;
-      const { sx, sz } = project(canvas, minX, maxX, minZ, maxZ);
+      const projection = createSimulationProjection({ width, height, minX, maxX, minZ, maxZ });
+      const sx = projection.x;
+      const sz = projection.z;
 
       // Background
       ctx.clearRect(0, 0, width, height);
@@ -221,7 +199,7 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
       ctx.font = '11px sans-serif';
       ctx.fillText(`Height: ${z.toFixed(2)}m`, 16, 42);
     },
-    [frames, project, replay.config_points, sampleFrame]
+    [frames, replay.config_points, sampleFrame]
   );
 
   useEffect(() => {
@@ -277,7 +255,7 @@ export function SimulationAnimation({ replay, className }: SimulationAnimationPr
   };
 
   const card = (
-    <div className={cn('bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden flex flex-col', className)}>
+    <div className={cn('bg-surface-container-low rounded-xl border border-outline-variant/10 overflow-hidden flex flex-col', expanded && 'h-full', className)}>
       <div ref={containerRef} className={cn('relative w-full', expanded ? 'flex-1 min-h-0' : 'aspect-[2.3/1] min-h-[260px] max-h-[520px]')}>
         <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
       </div>
