@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { User, Layers, Mountain, Plus, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -11,9 +12,15 @@ function generateId() {
 
 type Tab = 'personal' | 'board' | 'trails';
 
+function getCreationTab(value: string | null): Tab | null {
+  return value === 'personal' || value === 'board' || value === 'trails' ? value : null;
+}
+
 export function Presets() {
-  const [activeTab, setActiveTab] = useState<Tab>('personal');
-  const [isCreating, setIsCreating] = useState(false);
+  const [searchParams] = useSearchParams();
+  const initialCreationTab = getCreationTab(searchParams.get('create'));
+  const [activeTab, setActiveTab] = useState<Tab>(initialCreationTab ?? 'personal');
+  const [isCreating, setIsCreating] = useState(initialCreationTab !== null);
   const [presets, setPresets] = useState<PresetsCollection>({ personal: [], board: [], trails: [] });
 
   const reload = async () => {
@@ -23,6 +30,14 @@ export function Presets() {
   useEffect(() => {
     reload();
   }, []);
+
+  useEffect(() => {
+    const creationTab = getCreationTab(searchParams.get('create'));
+    if (creationTab) {
+      setActiveTab(creationTab);
+      setIsCreating(true);
+    }
+  }, [searchParams]);
 
   return (
     <div className="max-w-5xl mx-auto px-6 lg:px-12 py-8">
