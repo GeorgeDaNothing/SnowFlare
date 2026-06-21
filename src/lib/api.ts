@@ -1,5 +1,5 @@
 /**
- * Horizon Pulse API client.
+ * SnowFlare API client.
  * All endpoints require Bearer token (except auth register/login/reset flows).
  */
 

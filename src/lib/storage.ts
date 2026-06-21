@@ -1,6 +1,6 @@
 /**
  * Server-backed storage layer.
- * All CRUD operations are now async and call the Horizon Pulse API.
+ * All CRUD operations are now async and call the SnowFlare API.
  * Legacy localStorage keys are no longer used for app data.
  */
 

@@ -246,7 +246,7 @@ function EmptyDashboard() {
               <Sparkles className="w-4 h-4 fill-current" />
               <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Getting Started</span>
             </div>
-            <h2 className="text-3xl font-bold mb-4 leading-tight">Welcome to Horizon Pulse</h2>
+            <h2 className="text-3xl font-bold mb-4 leading-tight">Welcome to SnowFlare</h2>
             <p className="text-on-primary/80 max-w-md text-sm leading-relaxed mb-6">
               Start by designing a move in the Move Designer, then analyze it for danger factors. Log your sessions to build a personal risk profile over time.
             </p>

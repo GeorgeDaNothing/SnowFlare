@@ -25,10 +25,13 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant/10">
       {/* Brand */}
       <div className="px-6 py-5 border-b border-outline-variant/10">
-        <Link to="/" className="text-xl font-bold tracking-tighter text-on-surface">
-          Horizon Pulse
+        <Link to="/" className="flex items-center gap-3">
+          <img src="/logo.svg" alt="SnowFlare" className="w-9 h-9 rounded-full object-cover" />
+          <div>
+            <span className="text-xl font-bold tracking-tighter text-on-surface block leading-none">SnowFlare</span>
+            <span className="text-[10px] text-on-surface-variant tracking-wider uppercase">Snowboarding Simulator</span>
+          </div>
         </Link>
-        <p className="text-[10px] text-on-surface-variant mt-0.5 tracking-wider uppercase">Snowboarding Simulator</p>
       </div>
 
       {/* Nav */}

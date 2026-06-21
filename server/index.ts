@@ -49,5 +49,5 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[server] Horizon Pulse API running on http://0.0.0.0:${PORT}`);
+  console.log(`[server] SnowFlare API running on http://0.0.0.0:${PORT}`);
 });

@@ -56,7 +56,7 @@ export function Login() {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-bold text-on-surface">Welcome back</h1>
-          <p className="text-sm text-on-surface-variant mt-1">Sign in to your Horizon Pulse account</p>
+          <p className="text-sm text-on-surface-variant mt-1">Sign in to your SnowFlare account</p>
         </div>
 
         <div className="bg-surface-container-low rounded-2xl p-6 shadow-sm border border-outline-variant/10">

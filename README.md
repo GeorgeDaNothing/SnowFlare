@@ -1,6 +1,6 @@
-# Horizon Pulse
+# SnowFlare
 
-A modern React application for athletic performance analysis, featuring video analysis, move design, AI-powered insights, and a complete user authentication system.
+A modern React application for snowboard performance analysis, featuring video analysis, move design, jump simulation, AI-powered insights, and a complete user authentication system.
 
 ## Features
 

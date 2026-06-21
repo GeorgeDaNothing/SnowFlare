@@ -1,5 +1,5 @@
 {
-  "name": "Horizon Pulse",
-  "description": "AI-driven sports performance analysis and biomechanical evaluation platform.",
+  "name": "SnowFlare",
+  "description": "AI-driven snowboard performance analysis, move design, and jump simulation.",
   "requestFramePermissions": ["camera"]
 }

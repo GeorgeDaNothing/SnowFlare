@@ -134,7 +134,7 @@ export function Register() {
             <ShieldCheck className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-bold text-on-surface">Create your account</h1>
-          <p className="text-sm text-on-surface-variant mt-1">Join Horizon Pulse today</p>
+          <p className="text-sm text-on-surface-variant mt-1">Join SnowFlare today</p>
         </div>
 
         <div className="flex items-center gap-2 mb-6">

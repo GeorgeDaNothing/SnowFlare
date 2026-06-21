@@ -1,4 +1,4 @@
-# Horizon Pulse — Implementation Checklist
+# SnowFlare — Implementation Checklist
 
 > Snowboarding move simulation and danger identification platform.
 > Approach: **Rule-Based Core + AI Enhancement**
