@@ -26,7 +26,7 @@ export function Sidebar() {
       {/* Brand */}
       <div className="px-6 py-5 border-b border-outline-variant/10">
         <Link to="/" className="flex items-center gap-3">
-          <img src="/logo.svg" alt="SnowFlare" className="w-9 h-9 rounded-full object-cover" />
+          <img src="/logo.png" alt="SnowFlare" className="w-9 h-9 rounded-full object-cover" />
           <div>
             <span className="text-xl font-bold tracking-tighter text-on-surface block leading-none">SnowFlare</span>
             <span className="text-[10px] text-on-surface-variant tracking-wider uppercase">Snowboarding Simulator</span>
